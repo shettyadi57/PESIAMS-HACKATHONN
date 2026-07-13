@@ -89,13 +89,22 @@ function MemberCard({ member, delay }: { member: Member; delay: number }) {
       .toUpperCase();
   };
 
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    e.currentTarget.style.setProperty("--mouse-x", `${x}px`);
+    e.currentTarget.style.setProperty("--mouse-y", `${y}px`);
+  };
+
   return (
     <motion.div
       ref={cardRef}
       initial={{ opacity: 0, y: 30 }}
       animate={isInView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.6, delay }}
-      className="group relative overflow-hidden rounded-2xl bg-[#0a0a0f] border border-white/5 hover:border-accent-cyan/35 shadow-2xl flex flex-col transition-all duration-300 hover:-translate-y-1.5"
+      onMouseMove={handleMouseMove}
+      className="group relative overflow-hidden rounded-2xl glass-panel border border-white/5 hover:border-accent-cyan/35 shadow-2xl flex flex-col transition-all duration-300 hover:-translate-y-1.5"
     >
       {/* 3D-like hover aura gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-accent-cyan/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
@@ -162,7 +171,7 @@ export default function Organizers() {
   const isHeaderInView = useInView(headerRef, { once: true, margin: "-100px" });
 
   return (
-    <section id="organizers" className="relative z-20 py-24 md:py-32 overflow-hidden border-t border-border-glass bg-background">
+    <section id="organizers" className="relative z-20 py-24 md:py-32 overflow-hidden border-t border-border-glass bg-transparent">
       {/* Background glow radial */}
       <div className="absolute top-[30%] left-[50%] -translate-x-1/2 w-[50vw] h-[50vw] rounded-full bg-accent-violet/5 blur-[120px] pointer-events-none" />
 

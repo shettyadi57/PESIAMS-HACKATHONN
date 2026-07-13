@@ -53,11 +53,11 @@ function StatItem({ label, value, suffix, delay }: StatItemProps) {
 
 export default function StatsStrip() {
   const stats = [
-    { label: "Target Registrations", value: 1000, suffix: "+" },
-    { label: "Colleges Invited", value: 120, suffix: "+" },
-    { label: "Prize Pool", value: 100000, suffix: "₹" },
+    { label: "Target Registrations", value: 70, suffix: "+" },
+    { label: "Colleges Invited", value: 20, suffix: "+" },
+    { label: "Prize Pool", value: 17000, suffix: " ₹" },
     { label: "Innovation Domains", value: 10, suffix: "" },
-    { label: "Expert Mentors", value: 25, suffix: "+" },
+    { label: "Expert Mentors", value: 10, suffix: "+" },
   ];
 
   return (

@@ -1,4 +1,3 @@
-"use"
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -12,13 +11,14 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems = [
-    { number: "01", label: "About", id: "about" },
-    { number: "02", label: "Domains", id: "domains" },
+    { number: "01", label: "About",    id: "about"    },
+    { number: "02", label: "Domains",  id: "domains"  },
     { number: "03", label: "Timeline", id: "timeline" },
-    { number: "04", label: "Prizes", id: "prizes" },
-    { number: "05", label: "Venue", id: "venue" },
-    { number: "06", label: "FAQ", id: "faq" },
-    { number: "07", label: "Contact", id: "contact" },
+    { number: "04", label: "Schedule", id: "schedule" },
+    { number: "05", label: "Prizes",   id: "prizes"   },
+    { number: "06", label: "Venue",    id: "venue"    },
+    { number: "07", label: "FAQ",      id: "faq"      },
+    { number: "08", label: "Contact",  id: "contact"  },
   ];
 
   useEffect(() => {

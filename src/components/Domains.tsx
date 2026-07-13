@@ -4,14 +4,9 @@ import React, { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import {
   Brain,
-  TrendingUp,
   Shield,
   HeartPulse,
-  Sprout,
-  Coins,
   Wifi,
-  Bot,
-  Cloud,
   Globe,
 } from "lucide-react";
 
@@ -29,70 +24,35 @@ const tracks: Track[] = [
     icon: Brain,
     title: "Artificial Intelligence",
     hook: "Cognitive agent loops",
-    desc: "Build local agent loops, advanced neural logic pipelines, large language models integrations, and autonomous workflow engines.",
+    desc: "Build autonomous AI agents, integrate large language models, design neural pipelines, and craft intelligent workflow engines for real-world problems.",
   },
   {
     num: "02",
-    icon: TrendingUp,
-    title: "Machine Learning",
-    hook: "Predictive intelligence",
-    desc: "Develop classification algorithms, deep predictive estimators, linear estimators, and customized data training flows.",
-  },
-  {
-    num: "03",
     icon: Shield,
     title: "Cyber Security",
     hook: "Hardened infrastructure",
-    desc: "Conduct vulnerability checks, map security telemetry, secure communication ports, and audit encryption protocols.",
+    desc: "Build vulnerability scanners, audit encryption protocols, design secure communication layers, and create tools that protect digital infrastructure.",
   },
   {
-    num: "04",
+    num: "03",
     icon: HeartPulse,
     title: "Healthcare Tech",
     hook: "Digital health assistance",
-    desc: "Tackle clinical workflow issues, build patient record analyzers, diagnostic aids, and fitness telemetry dashboards.",
+    desc: "Design patient record analyzers, diagnostic decision aids, fitness telemetry dashboards, and clinical workflow tools that save lives.",
   },
   {
-    num: "05",
-    icon: Sprout,
-    title: "AgriTech",
-    hook: "Precision farming inputs",
-    desc: "Build sensor arrays for crop monitoring, predictive yield models, automated irrigation planners, and soil health trackers.",
-  },
-  {
-    num: "06",
-    icon: Coins,
-    title: "FinTech",
-    hook: "Decentralized trust layers",
-    desc: "Code secure ledger models, micro-payment routing APIs, fraud detection systems, and budget managers.",
-  },
-  {
-    num: "07",
+    num: "04",
     icon: Wifi,
     title: "Internet of Things",
     hook: "Hardware edge telemetry",
-    desc: "Deploy microcontroller modules, edge data filters, ambient telemetry triggers, and smart home modules.",
+    desc: "Connect microcontrollers, deploy edge data filters, build ambient telemetry triggers, and create smart systems that bridge physical and digital worlds.",
   },
   {
-    num: "08",
-    icon: Bot,
-    title: "Robotics & Automation",
-    hook: "Kinetic software triggers",
-    desc: "Coordinate motor drives, design pathfinders, synchronize actuator loops, and process spatial feedback inputs.",
-  },
-  {
-    num: "09",
-    icon: Cloud,
-    title: "Cloud Computing",
-    hook: "Elastic scaling nodes",
-    desc: "Deploy serverless functions, manage node routing tables, build microservices, and design highly available databases.",
-  },
-  {
-    num: "10",
+    num: "05",
     icon: Globe,
     title: "Open Innovation",
     hook: "Unbounded digital creations",
-    desc: "Solve custom local challenges, build original utilities, develop educational helpers, or pitch wildcard applications.",
+    desc: "Solve local community challenges, build original utilities, develop educational tools, or pitch any wildcard digital solution that creates real impact.",
   },
 ];
 
@@ -104,6 +64,14 @@ function TrackCard({ track, index }: { track: Track; index: number }) {
   // Staggered sticky top offsets to make the card stack like a layered deck
   const stickyTop = 100 + index * 26;
 
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    e.currentTarget.style.setProperty("--mouse-x", `${x}px`);
+    e.currentTarget.style.setProperty("--mouse-y", `${y}px`);
+  };
+
   return (
     <div
       ref={cardRef}
@@ -114,7 +82,8 @@ function TrackCard({ track, index }: { track: Track; index: number }) {
         initial={{ opacity: 0, y: 30 }}
         animate={isInView ? { opacity: 1, y: 0 } : {}}
         transition={{ duration: 0.6, delay: 0.05 }}
-        className="group relative overflow-hidden rounded-3xl glass-panel p-8 md:p-10 border border-white/10 shadow-[0_-15px_40px_rgba(0,0,0,0.85)] flex flex-col md:flex-row md:items-center justify-between gap-8 bg-[#07070b] hover:border-accent-cyan/40 transition-all duration-300 min-h-[200px]"
+        onMouseMove={handleMouseMove}
+        className="group relative overflow-hidden rounded-3xl glass-panel p-8 md:p-10 border border-white/10 shadow-[0_-15px_40px_rgba(0,0,0,0.85)] flex flex-col md:flex-row md:items-center justify-between gap-8 hover:border-accent-cyan/40 transition-all duration-300 min-h-[200px]"
       >
         {/* Glowing background highlight on hover */}
         <div className="absolute inset-0 bg-gradient-to-r from-accent-violet/5 via-transparent to-accent-cyan/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
@@ -158,7 +127,7 @@ export default function Domains() {
   const isInView = useInView(containerRef, { once: true, margin: "-100px" });
 
   return (
-    <section id="domains" className="relative z-20 py-24 md:py-32 overflow-hidden border-t border-border-glass bg-background">
+    <section id="domains" className="relative z-20 py-24 md:py-32 overflow-hidden border-t border-border-glass bg-transparent">
       {/* Background glow radial */}
       <div className="absolute bottom-[10%] right-[-10%] w-[45vw] h-[45vw] rounded-full bg-accent-cyan/5 blur-[130px] pointer-events-none" />
 
@@ -187,7 +156,7 @@ export default function Domains() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-base text-zinc-400 leading-relaxed font-normal"
           >
-            Formulate your ideas and develop software solutions. Align your team with one of our ten innovation domains.
+            Formulate your ideas and develop software solutions. Align your team with one of our <span className="text-white font-semibold">five innovation domains</span>.
           </motion.p>
         </div>
 

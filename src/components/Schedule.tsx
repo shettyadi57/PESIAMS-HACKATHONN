@@ -2,183 +2,314 @@
 
 import React, { useRef } from "react";
 import { motion, useInView } from "framer-motion";
-import { Clock, Coffee, Play, ShieldAlert, Award, FileCode, Cpu, Sparkles } from "lucide-react";
 
-interface ScheduleItem {
+// ─── Data ─────────────────────────────────────────────────────────────────────
+interface Evt {
   time: string;
   title: string;
-  desc: string;
-  icon: React.ComponentType<{ className?: string; size?: number }>;
-  type: "general" | "hacking" | "food" | "review" | "ceremony";
+  above: boolean;
+  // only two accent colors — violet or cyan, matching site palette
+  accent: "violet" | "cyan";
 }
 
-const singleDaySchedule: ScheduleItem[] = [
-  {
-    time: "09:00 AM - 09:45 AM",
-    title: "Registration and Participant Reporting",
-    desc: "Verification of team IDs, allocation of coding stations, and distribution of hackathon badges and kits.",
-    icon: Coffee,
-    type: "general",
-  },
-  {
-    time: "10:00 AM - 10:30 AM",
-    title: "Inauguration Ceremony",
-    desc: "Official welcome address, introduction of jury members, and explanation of evaluation parameters.",
-    icon: Play,
-    type: "ceremony",
-  },
-  {
-    time: "10:30 AM",
-    title: "Problem Statements Revealed & Hackathon Begins",
-    desc: "Problem statements are officially unlocked on the portal, and the coding sprint clock starts.",
-    icon: FileCode,
-    type: "hacking",
-  },
-  {
-    time: "10:30 AM - 01:30 PM",
-    title: "Development Session",
-    desc: "Initial architecture planning, database schemas formulation, and repository setup.",
-    icon: Cpu,
-    type: "hacking",
-  },
-  {
-    time: "01:30 PM - 02:00 PM",
-    title: "Working Lunch",
-    desc: "A quick lunch served directly at the stations to keep coding momentum uninterrupted.",
-    icon: Coffee,
-    type: "food",
-  },
-  {
-    time: "02:00 PM - 03:00 PM",
-    title: "Development Continues",
-    desc: "Refining core functionalities, integrating front-end interfaces, and testing APIs.",
-    icon: Cpu,
-    type: "hacking",
-  },
-  {
-    time: "03:00 PM",
-    title: "Hidden Challenge / Twist Revealed",
-    desc: "A surprise technical constraint or feature requirement is introduced to test flexibility and adaptability.",
-    icon: Sparkles,
-    type: "review",
-  },
-  {
-    time: "03:00 PM - 04:30 PM",
-    title: "Final Development and Adaptation",
-    desc: "Integrating the surprise twist, debugging, and polishing the final user interface.",
-    icon: Cpu,
-    type: "hacking",
-  },
-  {
-    time: "04:30 PM",
-    title: "Hard Submission Deadline",
-    desc: "Final code repositories must be committed, and product descriptions submitted on the portal.",
-    icon: ShieldAlert,
-    type: "review",
-  },
-  {
-    time: "04:30 PM - 05:30 PM",
-    title: "Final Evaluation & Closing Activities",
-    desc: "Jury evaluations via live project demonstrations, followed by the closing remarks and prize distribution.",
-    icon: Award,
-    type: "ceremony",
-  },
+const EVENTS: Evt[] = [
+  { time: "09:00 AM", title: "Registration & Check-in",   above: false, accent: "violet" },
+  { time: "09:30 AM", title: "Inauguration",              above: true,  accent: "cyan"   },
+  { time: "10:00 AM", title: "Hacking Begins",            above: false, accent: "cyan"   },
+  { time: "01:00 PM", title: "Lunch Break",               above: true,  accent: "violet" },
+  { time: "02:00 PM", title: "Mentoring Session",         above: false, accent: "violet" },
+  { time: "03:00 PM", title: "Surprise Challenge",        above: true,  accent: "cyan"   },
+  { time: "04:00 PM", title: "Final Submissions",         above: false, accent: "cyan"   },
+  { time: "04:30 PM", title: "Project Judging",           above: true,  accent: "violet" },
+  { time: "05:00 PM", title: "Award Ceremony",            above: false, accent: "cyan"   },
 ];
 
-export default function Schedule() {
-  const containerRef = useRef(null);
-  const isInView = useInView(containerRef, { once: true, margin: "-100px" });
+// ─── Color constants ─────────────────────────────────────────────────────────
+const C = {
+  violet: {
+    hex:    "#8b5cf6",
+    glow:   "rgba(139,92,246,0.35)",
+    ring:   "rgba(139,92,246,0.22)",
+    border: "rgba(139,92,246,0.5)",
+    bg:     "rgba(139,92,246,0.08)",
+    text:   "#a78bfa",
+  },
+  cyan: {
+    hex:    "#06b6d4",
+    glow:   "rgba(6,182,212,0.35)",
+    ring:   "rgba(6,182,212,0.22)",
+    border: "rgba(6,182,212,0.5)",
+    bg:     "rgba(6,182,212,0.08)",
+    text:   "#22d3ee",
+  },
+} as const;
 
-  const getTypeStyle = (type: ScheduleItem["type"]) => {
-    switch (type) {
-      case "hacking":
-        return "border-accent-cyan bg-accent-cyan/10 text-accent-cyan shadow-[0_0_15px_rgba(6,182,212,0.15)]";
-      case "review":
-        return "border-amber-500 bg-amber-500/10 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.15)]";
-      case "food":
-        return "border-emerald-500 bg-emerald-500/10 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.15)]";
-      case "ceremony":
-        return "border-accent-violet bg-accent-violet/10 text-accent-violet shadow-[0_0_15px_rgba(139,92,246,0.15)]";
-      default:
-        return "border-zinc-700 bg-zinc-850/40 text-zinc-300";
-    }
-  };
+// ─── Layout constants (px) ───────────────────────────────────────────────────
+const CARD_W  = 130;
+const CARD_H  = 64;
+const STEM_H  = 46;
+const SP      = 158;   // horizontal spacing between nodes
+const PAD_L   = 60;
+const PAD_R   = CARD_W + 20;  // enough room so last card never clips
+const LINE_Y  = CARD_H + STEM_H;                        // 110 — y of track
+const TOTAL_H = LINE_Y + STEM_H + CARD_H + 24;          // 244
+const TOTAL_W = PAD_L + EVENTS.length * SP + PAD_R;
+
+const cx = (i: number) => PAD_L + 28 + i * SP;          // node centre x
+
+// ─── Single Event Node ────────────────────────────────────────────────────────
+function Node({ evt, i, visible }: { evt: Evt; i: number; visible: boolean }) {
+  const col   = C[evt.accent];
+  const x     = cx(i);
+  const cardX = x - CARD_W / 2;
+  const cardY = evt.above ? 0 : LINE_Y + STEM_H + 8;
 
   return (
-    <section id="schedule" className="relative z-20 py-24 md:py-32 overflow-hidden border-t border-border-glass bg-background">
-      {/* Background glow */}
-      <div className="absolute top-[20%] right-[-10%] w-[35vw] h-[35vw] rounded-full bg-accent-violet/5 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[20%] left-[-10%] w-[35vw] h-[35vw] rounded-full bg-accent-cyan/5 blur-[120px] pointer-events-none" />
+    <>
+      {/* ── Card ── */}
+      <motion.div
+        initial={{ opacity: 0, y: evt.above ? -14 : 14 }}
+        animate={visible ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.5, delay: i * 0.09 }}
+        style={{
+          position: "absolute",
+          left: cardX,
+          top: cardY,
+          width: CARD_W,
+          height: CARD_H,
+          zIndex: 10,
+        }}
+      >
+        <div
+          className="glass-panel rounded-xl h-full"
+          style={{
+            padding: "10px 12px",
+            borderLeft: `2px solid ${col.border}`,
+            boxShadow: `0 0 20px ${col.glow}, inset 0 1px 0 rgba(255,255,255,0.04)`,
+          }}
+        >
+          {/* Time badge */}
+          <span
+            className="block text-[9px] font-black uppercase tracking-widest mb-1.5"
+            style={{ color: col.text }}
+          >
+            {evt.time}
+          </span>
+          {/* Title */}
+          <span
+            className="block text-[11.5px] font-bold text-white leading-snug"
+            style={{ letterSpacing: "-0.01em" }}
+          >
+            {evt.title}
+          </span>
+        </div>
+      </motion.div>
+    </>
+  );
+}
 
-      <div className="max-w-6xl mx-auto px-6 md:px-12">
-        {/* Section Header */}
-        <div ref={containerRef} className="flex flex-col mb-16 max-w-2xl lg:mx-auto lg:text-center">
+// ─── SVG Layer (track + stems + dots) ────────────────────────────────────────
+function TrackSVG({ visible }: { visible: boolean }) {
+  return (
+    <svg
+      width={TOTAL_W}
+      height={TOTAL_H}
+      style={{ position: "absolute", inset: 0, overflow: "visible" }}
+    >
+      <defs>
+        {/* Site-matched gradient: violet → cyan → violet */}
+        <linearGradient id="track-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"   stopColor="#8b5cf6" />
+          <stop offset="50%"  stopColor="#06b6d4" />
+          <stop offset="100%" stopColor="#8b5cf6" />
+        </linearGradient>
+
+        {/* Soft glow filter */}
+        <filter id="soft-glow" x="-20%" y="-200%" width="140%" height="500%">
+          <feGaussianBlur stdDeviation="3.5" result="blur" />
+          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
+        <filter id="dot-glow" x="-100%" y="-100%" width="300%" height="300%">
+          <feGaussianBlur stdDeviation="4" result="blur" />
+          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
+      </defs>
+
+      {/* === GLOW LAYER behind track === */}
+      <line
+        x1={PAD_L} y1={LINE_Y} x2={TOTAL_W - PAD_R} y2={LINE_Y}
+        stroke="url(#track-grad)" strokeWidth={8} strokeOpacity={0.18}
+        filter="url(#soft-glow)"
+      />
+
+      {/* === TRACK LINE === */}
+      <motion.line
+        x1={PAD_L} y1={LINE_Y} x2={TOTAL_W - PAD_R} y2={LINE_Y}
+        stroke="url(#track-grad)" strokeWidth={1.5}
+        strokeLinecap="round"
+        initial={{ pathLength: 0, opacity: 0 }}
+        animate={visible ? { pathLength: 1, opacity: 1 } : {}}
+        transition={{ duration: 1.5, ease: "easeInOut", delay: 0.15 }}
+      />
+
+      {EVENTS.map((evt, i) => {
+        const col     = C[evt.accent];
+        const x       = cx(i);
+        const stemTop = evt.above ? CARD_H + 2  : LINE_Y + 2;
+        const stemBot = evt.above ? LINE_Y - 2  : LINE_Y + STEM_H + 8;
+
+        return (
+          <g key={i}>
+            {/* Stem */}
+            <motion.line
+              x1={x} y1={stemTop} x2={x} y2={stemBot}
+              stroke={col.hex} strokeWidth={1} strokeOpacity={0.45}
+              strokeDasharray="3 3"
+              initial={{ scaleY: 0, opacity: 0 }}
+              animate={visible ? { scaleY: 1, opacity: 1 } : {}}
+              transition={{ duration: 0.4, delay: i * 0.09 + 0.35 }}
+              style={{ transformOrigin: `${x}px ${stemTop}px` }}
+            />
+            {/* Outer glow ring */}
+            <motion.circle
+              cx={x} cy={LINE_Y} r={11}
+              fill={col.ring}
+              stroke={col.hex} strokeWidth={1} strokeOpacity={0.4}
+              filter="url(#dot-glow)"
+              initial={{ scale: 0 }}
+              animate={visible ? { scale: 1 } : {}}
+              transition={{ type:"spring", stiffness:200, damping:14, delay: i*0.09+0.28 }}
+              style={{ transformOrigin: `${x}px ${LINE_Y}px` }}
+            />
+            {/* Inner dot */}
+            <motion.circle
+              cx={x} cy={LINE_Y} r={5}
+              fill={col.hex}
+              filter="url(#dot-glow)"
+              initial={{ scale: 0 }}
+              animate={visible ? { scale: 1 } : {}}
+              transition={{ type:"spring", stiffness:240, damping:12, delay: i*0.09+0.31 }}
+              style={{ transformOrigin: `${x}px ${LINE_Y}px` }}
+            />
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+// ─── Section ──────────────────────────────────────────────────────────────────
+export default function Schedule() {
+  const headerRef = useRef<HTMLDivElement>(null);
+  const trackRef  = useRef<HTMLDivElement>(null);
+  const headerVis = useInView(headerRef, { once: true, margin: "-80px" });
+  const trackVis  = useInView(trackRef,  { once: true, margin: "-60px" });
+
+  return (
+    <section
+      id="schedule"
+      className="relative z-20 py-24 md:py-32 overflow-hidden border-t border-border-glass bg-transparent"
+    >
+      {/* Background glows — site palette only */}
+      <div className="absolute top-[5%]  left-[-8%]  w-[45vw] h-[45vw] rounded-full bg-accent-violet/5 blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-[5%] right-[-8%] w-[45vw] h-[45vw] rounded-full bg-accent-cyan/5   blur-[140px] pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto px-6 md:px-12">
+
+        {/* ── Section Header (matches site typography style) ── */}
+        <div ref={headerRef} className="flex flex-col mb-20 max-w-2xl lg:mx-auto lg:text-center">
           <motion.span
-            initial={{ opacity: 0, y: 10 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6 }}
+            initial={{ opacity:0, y:10 }}
+            animate={headerVis ? {opacity:1, y:0} : {}}
+            transition={{ duration:0.55 }}
             className="text-xs font-display font-black tracking-widest text-accent-cyan uppercase mb-3"
           >
-            Agenda // The Program
+            04 // The Program
           </motion.span>
           <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="font-display font-black text-4xl md:text-5xl tracking-tight text-white mb-6"
+            initial={{ opacity:0, y:20 }}
+            animate={headerVis ? {opacity:1, y:0} : {}}
+            transition={{ duration:0.55, delay:0.1 }}
+            className="font-display font-black text-4xl md:text-5xl tracking-tight text-white mb-4"
           >
-            Event Day Schedule
+            Event Schedule
           </motion.h2>
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            initial={{ opacity:0, y:20 }}
+            animate={headerVis ? {opacity:1, y:0} : {}}
+            transition={{ duration:0.55, delay:0.2 }}
             className="text-base text-zinc-400 leading-relaxed font-normal"
           >
-            Plan your sprint. Follow our scheduled checkpoints, problem statement unlocking, surprise challenges, and jury presentation sessions.
+            Complete day-of agenda for{" "}
+            <span className="text-white font-semibold">Sep 5, 2026</span> at PESIAMS, Shivamogga.
           </motion.p>
         </div>
 
-        {/* Schedule list */}
-        <div className="max-w-4xl mx-auto space-y-5">
-          {singleDaySchedule.map((item, idx) => {
-            const ItemIcon = item.icon;
-            return (
-              <motion.div
-                key={item.title}
-                initial={{ opacity: 0, y: 20 }}
-                animate={isInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.5, delay: idx * 0.05 }}
-                className="group relative overflow-hidden rounded-2xl glass-panel p-6 flex flex-col md:flex-row md:items-center gap-6 hover:bg-card-dark-hover transition-all duration-300 border border-white/5 hover:border-white/10"
-              >
-                {/* Time Frame Column */}
-                <div className="flex items-center gap-3 md:w-52 shrink-0">
-                  <Clock size={15} className="text-zinc-500 group-hover:text-accent-cyan transition-colors" />
-                  <span className="font-display font-black text-sm text-white tracking-wider">
-                    {item.time}
-                  </span>
-                </div>
+        {/* ── Track ── */}
+        <div ref={trackRef}>
 
-                {/* Decorative Divider */}
-                <div className="hidden md:block w-[1px] h-10 bg-border-glass group-hover:bg-accent-cyan/20 transition-colors" />
+          {/* Day badge — matches Timeline section pill style */}
+          <motion.div
+            initial={{ opacity:0, x:-16 }}
+            animate={trackVis ? {opacity:1, x:0} : {}}
+            transition={{ duration:0.45 }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-10 text-[10px] font-black uppercase tracking-widest text-accent-cyan"
+            style={{
+              background: "rgba(6,182,212,0.08)",
+              border: "1px solid rgba(6,182,212,0.3)",
+              boxShadow: "0 0 14px rgba(6,182,212,0.12)",
+            }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-accent-cyan animate-pulse" />
+            Sep 5, 2026 &mdash; Hackathon Day
+          </motion.div>
 
-                {/* Icon and Description Grid */}
-                <div className="flex items-start gap-4 flex-1">
-                  <div className={`p-2.5 rounded-xl border shrink-0 ${getTypeStyle(item.type)}`}>
-                    <ItemIcon size={16} />
-                  </div>
-                  <div>
-                    <h3 className="font-display font-bold text-base text-white group-hover:text-accent-cyan transition-colors mb-1">
-                      {item.title}
-                    </h3>
-                    <p className="text-xs text-zinc-450 leading-relaxed font-normal">
-                      {item.desc}
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })}
+          {/* Scroll wrapper */}
+          <div
+            className="overflow-x-auto pb-4"
+            style={{ scrollbarWidth:"none", WebkitOverflowScrolling:"touch" } as React.CSSProperties}
+          >
+            {/* Canvas */}
+            <div
+              style={{
+                position: "relative",
+                width: TOTAL_W,
+                height: TOTAL_H,
+                minWidth: TOTAL_W,
+              }}
+            >
+              <TrackSVG visible={trackVis} />
+              {EVENTS.map((evt, i) => (
+                <Node key={i} evt={evt} i={i} visible={trackVis} />
+              ))}
+            </div>
+          </div>
+
+          {/* Legend */}
+          <motion.div
+            initial={{ opacity:0, y:12 }}
+            animate={trackVis ? {opacity:1, y:0} : {}}
+            transition={{ duration:0.45, delay:0.8 }}
+            className="flex items-center justify-center gap-6 mt-8"
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-accent-violet shadow-[0_0_6px_rgba(139,92,246,0.8)]" />
+              <span className="text-[10px] text-zinc-500 font-semibold uppercase tracking-widest">
+                Opening / Break / Judging
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-accent-cyan shadow-[0_0_6px_rgba(6,182,212,0.8)]" />
+              <span className="text-[10px] text-zinc-500 font-semibold uppercase tracking-widest">
+                Hacking / Ceremony
+              </span>
+            </div>
+          </motion.div>
+
+          {/* Mobile scroll hint */}
+          <p className="mt-3 text-center text-[10px] font-bold uppercase tracking-widest text-zinc-700 lg:hidden">
+            ← Scroll horizontally to see full schedule →
+          </p>
         </div>
       </div>
     </section>

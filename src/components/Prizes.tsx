@@ -80,6 +80,14 @@ function PrizeCard({ prize, index }: { prize: MainPrize; index: number }) {
     animate: { left: ["-100%", "200%"] },
   };
 
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    e.currentTarget.style.setProperty("--mouse-x", `${x}px`);
+    e.currentTarget.style.setProperty("--mouse-y", `${y}px`);
+  };
+
   return (
     <motion.div
       ref={cardRef}
@@ -98,7 +106,8 @@ function PrizeCard({ prize, index }: { prize: MainPrize; index: number }) {
     >
       {/* Border tracing vector effect */}
       <div
-        className={`w-full rounded-[24px] bg-[#030305] border ${prize.color} ${prize.glowClass} p-8 flex flex-col justify-between relative overflow-hidden transition-all duration-500 hover:-translate-y-1`}
+        onMouseMove={handleMouseMove}
+        className={`w-full rounded-[24px] glass-panel border ${prize.color} ${prize.glowClass} p-8 flex flex-col justify-between relative overflow-hidden transition-all duration-500 hover:-translate-y-1`}
       >
         {/* Shiny Glossy Glare Sweep (Periodic shine effect) */}
         <motion.div
@@ -181,7 +190,7 @@ export default function Prizes() {
   const isHeaderInView = useInView(headerRef, { once: true, margin: "-100px" });
 
   return (
-    <section id="prizes" className="relative z-20 py-24 md:py-32 overflow-hidden border-t border-border-glass bg-background">
+    <section id="prizes" className="relative z-20 py-24 md:py-32 overflow-hidden border-t border-border-glass bg-transparent">
       {/* Background soft highlights */}
       <div className="absolute top-[20%] left-[-10%] w-[45vw] h-[45vw] rounded-full bg-accent-violet/5 blur-[130px] pointer-events-none" />
 

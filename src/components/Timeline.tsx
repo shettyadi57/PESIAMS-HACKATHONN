@@ -13,51 +13,33 @@ interface Phase {
 const phases: Phase[] = [
   {
     num: "01",
-    date: "Aug 20, 2026",
+    date: "Jul 25, 2026",
     title: "Official Announcement",
-    desc: "UTKARSH 1.0 website and portal go live. Notifications and posters dispatched to leading technical campuses.",
+    desc: "UTKARSH 1.0 website and portal go live. Notifications and posters dispatched to leading BCA campuses across Karnataka.",
   },
   {
     num: "02",
-    date: "Sep 01, 2026",
+    date: "Aug 1, 2026",
     title: "Registrations Open",
-    desc: "Online portals accept team profiles. Builder guides, API resources, and handbook guidelines are published.",
+    desc: "Online portals open for team registration. Builder guides, API resources, and participant handbooks are published.",
   },
   {
     num: "03",
-    date: "Oct 10, 2026",
-    title: "Abstract Submission",
-    desc: "Teams upload their initial solution architecture slides, tech stack declarations, and developer profiles.",
+    date: "Aug 25, 2026",
+    title: "The Hacking Marathon Begins",
+    desc: "Registration closes. Hacking kicks off — teams lock in their problem statements and sprint begins with mentors on deck.",
   },
   {
     num: "04",
-    date: "Oct 18, 2026",
-    title: "Team Shortlisting",
-    desc: "AIML review panel evaluates proposals. Qualified teams receive official travel invitations and confirmation tickets.",
+    date: "Sep 5, 2026 — 09:00 AM",
+    title: "Hackathon Day",
+    desc: "The big day arrives at PESIAMS, Shivamogga. Opening ceremony, team check-in, live demos, and expert evaluation rounds.",
   },
   {
     num: "05",
-    date: "Oct 24, 2026 — 09:00 AM",
-    title: "The Hacking Marathon Begins",
-    desc: "Opening ceremony wraps up. Hacking begins with mentors desk-side auditing repos, starting the 24-hour sprint.",
-  },
-  {
-    num: "06",
-    date: "Oct 24, 2026 — 10:00 PM",
-    title: "Mentoring & Auditing Rounds",
-    desc: "Midnight engineering review. Experts run performance benchmarks, security evaluations, and UX checks.",
-  },
-  {
-    num: "07",
-    date: "Oct 25, 2026 — 10:00 AM",
-    title: "Final Presentation Sprints",
-    desc: "Hacking ends. Teams present working software prototypes, live data systems, and slides to judges.",
-  },
-  {
-    num: "08",
-    date: "Oct 25, 2026 — 03:00 PM",
-    title: "Awarding Ceremony",
-    desc: "Utkarsh 1.0 champions, runner-ups, and special innovation winners are announced. Certificates distributed.",
+    date: "Sep 5, 2026 — 04:00 PM",
+    title: "Award Ceremony",
+    desc: "UTKARSH 1.0 champions, runners-up, and special innovation award winners are announced. Certificates & prizes distributed.",
   },
 ];
 
@@ -215,7 +197,7 @@ export default function Timeline() {
   const roadY = useTransform(scroll3DProgress, [0, 1], ["0%", "200%"]);
 
   return (
-    <section id="timeline" className="relative z-20 py-24 md:py-32 overflow-hidden border-t border-border-glass bg-background">
+    <section id="timeline" className="relative z-20 py-24 md:py-32 overflow-hidden border-t border-border-glass bg-transparent">
       {/* Subtle background glow */}
       <div className="absolute top-[20%] left-[-15%] w-[45vw] h-[45vw] rounded-full bg-accent-violet/5 blur-[130px] pointer-events-none" />
       <div className="absolute bottom-[20%] right-[-15%] w-[45vw] h-[45vw] rounded-full bg-accent-cyan/5 blur-[130px] pointer-events-none" />
@@ -320,8 +302,47 @@ export default function Timeline() {
                   <div className="absolute left-0 top-0 bottom-0 w-[4px] bg-gradient-to-b from-accent-cyan via-accent-violet to-accent-cyan neon-glow-cyan" />
                   {/* Neon Violet/Pink right line border */}
                   <div className="absolute right-0 top-0 bottom-0 w-[4px] bg-gradient-to-b from-accent-violet via-accent-cyan to-accent-violet neon-glow-violet" />
-                  {/* Center divider dashed line */}
-                  <div className="absolute left-1/2 top-0 bottom-0 w-[2px] bg-dashed border-l border-white/20 transform -translate-x-1/2" />
+                  {/* ── Center lane dashes — scroll with road ────────── */}
+                  <motion.div
+                    className="absolute left-1/2 top-0 bottom-0 -translate-x-1/2 w-[3px] overflow-hidden pointer-events-none"
+                    style={{ y: roadY }}
+                  >
+                    {Array.from({ length: 14 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="w-full bg-white/55 rounded-full"
+                        style={{ height: 48, marginBottom: 36 }}
+                      />
+                    ))}
+                  </motion.div>
+
+                  {/* ── Left quarter-lane marker ────────── */}
+                  <motion.div
+                    className="absolute top-0 bottom-0 overflow-hidden pointer-events-none"
+                    style={{ left: "25%", y: roadY }}
+                  >
+                    {Array.from({ length: 14 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="w-[2px] bg-white/18 rounded-full"
+                        style={{ height: 36, marginBottom: 48 }}
+                      />
+                    ))}
+                  </motion.div>
+
+                  {/* ── Right quarter-lane marker ────────── */}
+                  <motion.div
+                    className="absolute top-0 bottom-0 overflow-hidden pointer-events-none"
+                    style={{ right: "25%", y: roadY }}
+                  >
+                    {Array.from({ length: 14 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="w-[2px] bg-white/18 rounded-full"
+                        style={{ height: 36, marginBottom: 48 }}
+                      />
+                    ))}
+                  </motion.div>
                 </div>
               </div>
 

@@ -12,7 +12,7 @@ interface TimeRemaining {
 }
 
 export default function CountdownTimer() {
-  const targetDate = React.useMemo(() => new Date("2026-10-24T09:00:00+05:30"), []);
+  const targetDate = React.useMemo(() => new Date("2026-09-05T09:00:00+05:30"), []);
   const [timeLeft, setTimeLeft] = useState<TimeRemaining>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isLive, setIsLive] = useState(false);
 

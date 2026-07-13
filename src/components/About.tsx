@@ -1,4 +1,3 @@
-"use"
 "use client";
 
 import React, { useRef } from "react";
@@ -26,7 +25,7 @@ export default function About() {
       num: "03",
       icon: Lightbulb,
       title: "Innovate & Compete",
-      desc: "Tackle real-world challenges across 10 specialized tracks. Showcase your creations to expert panels for top honors and cash rewards.",
+      desc: "Tackle real-world challenges across 5 specialized tracks. Showcase your creations to expert panels for top honors and cash rewards.",
     },
   ];
 
