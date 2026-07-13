@@ -1,0 +1,186 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #000000;
+  --color-foreground: #f8fafc;
+  --color-card-dark: #0a0a0f;
+  --color-card-dark-hover: #12121c;
+  --color-accent-violet: #8b5cf6;
+  --color-accent-cyan: #06b6d4;
+  --color-border-glass: rgba(255, 255, 255, 0.08);
+  --color-border-glass-hover: rgba(255, 255, 255, 0.16);
+
+  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-outfit), system-ui, -apple-system, sans-serif;
+
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-float-delayed: float 6s ease-in-out 3s infinite;
+  --animate-pulse-slow: pulse-slow 8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-aurora: aurora 15s ease infinite;
+  --animate-glow: glow 2s ease-in-out infinite;
+  --animate-grid-move: grid-move 20s linear infinite;
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  @keyframes pulse-slow {
+    0%, 100% { opacity: 0.15; transform: scale(1) translate(0, 0); }
+    50% { opacity: 0.35; transform: scale(1.1) translate(2%, 2%); }
+  }
+  @keyframes aurora {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  @keyframes glow {
+    0%, 100% { opacity: 0.5; filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.3)); }
+    50% { opacity: 0.8; filter: drop-shadow(0 0 20px rgba(6, 182, 212, 0.5)); }
+  }
+  @keyframes grid-move {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(40px); }
+  }
+}
+
+:root {
+  --background: #000000;
+  --foreground: #f8fafc;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #000000;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e1b4b;
+  border-radius: 5px;
+  border: 2px solid #000000;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #312e81;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  overflow-x: hidden;
+  font-family: var(--font-sans);
+  transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+/* Hide cursor on desktop for custom cursor */
+@media (hover: hover) and (pointer: fine) {
+  * {
+    cursor: none !important;
+  }
+}
+
+/* Theme Utilities for Alternating Layouts */
+.theme-light {
+  background-color: #ffffff;
+  color: #0f172a;
+}
+.theme-light-gray {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+/* Luxury Glassmorphism Utilities */
+.glass-panel {
+  background: rgba(10, 10, 15, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-panel:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.glass-panel-glow {
+  position: relative;
+}
+
+.glass-panel-glow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(6, 182, 212, 0.4));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.glass-panel-glow:hover::after {
+  opacity: 1;
+}
+
+/* Timeline Custom Styles */
+.timeline-dot-active {
+  box-shadow: 0 0 15px #8b5cf6, 0 0 5px #06b6d4;
+}
+
+/* Custom Grid Pattern Background */
+.grid-bg {
+  background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Smooth Scrolling */
+html.lenis, html.lenis body {
+  height: auto;
+}
+.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis-stopped {
+  overflow: hidden;
+}
+.lenis-scrolling iframe {
+  pointer-events: none;
+}
+
+/* 3D Road Perspective Utilities */
+.perspective-container {
+  perspective: 700px;
+  perspective-origin: 50% 30%;
+}
+
+.road-3d {
+  transform: rotateX(72deg);
+  transform-origin: 50% 100%;
+}
+
+/* Glowing Neon Lines */
+.neon-glow-cyan {
+  box-shadow: 0 0 15px rgba(6, 182, 212, 0.6), 0 0 5px rgba(6, 182, 212, 0.4);
+}
+
+.neon-glow-violet {
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.6), 0 0 5px rgba(139, 92, 246, 0.4);
+}
+
+.neon-glow-pink {
+  box-shadow: 0 0 15px rgba(236, 72, 153, 0.6), 0 0 5px rgba(236, 72, 153, 0.4);
+}
+
+.road-grid-pattern {
+  background-image: 
+    linear-gradient(to right, rgba(139, 92, 246, 0.15) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(139, 92, 246, 0.15) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
