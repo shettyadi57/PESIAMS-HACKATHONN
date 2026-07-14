@@ -23,7 +23,7 @@ const hodMember: Member = {
   name: "Mrs. Roopa D S",
   role: "Organizing Chair / HOD",
   dept: "Dept. of Computer Applications (BCA)",
-  photo: "", // Path to photo
+  photo: "https://pestrust.edu.in/pesiams/documents/files/faculty/1739877880_ffb5ab574de93e8a7982.png",
   linkedin: "https://linkedin.com",
 };
 
@@ -32,21 +32,21 @@ const facultyLeaders: Member[] = [
     name: "Mr. Sachidananda M H",
     role: "Faculty Coordinator",
     dept: "Dept. of Computer Applications (BCA)",
-    photo: "",
+    photo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRT3HQVRlmN_Tn-Ga9xIq_v5YB307e0MNY7gK2Pu0t-Qg&s=10",
     linkedin: "https://linkedin.com",
   },
   {
     name: "Ms. Asma Noorain",
     role: "Faculty Coordinator",
     dept: "Dept. of Computer Applications (BCA)",
-    photo: "",
+    photo: "https://pestrust.edu.in/pesiams/documents/files/faculty/1742292393_5e5983d1bf03f1510270.png",
     linkedin: "https://linkedin.com",
   },
   {
     name: "Mr. Bhanu Prakash P C",
     role: "Faculty Coordinator",
     dept: "Dept. of Computer Applications (BCA)",
-    photo: "",
+    photo: "https://pestrust.edu.in/pesiams/documents/files/facultydetails/1766817566_65d3fcd2b56106b71f96.jpg",
     linkedin: "https://linkedin.com",
   },
 ];
@@ -104,27 +104,38 @@ function MemberCard({ member, delay }: { member: Member; delay: number }) {
       animate={isInView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.6, delay }}
       onMouseMove={handleMouseMove}
-      className="group relative overflow-hidden rounded-2xl glass-panel border border-white/5 hover:border-accent-cyan/35 shadow-2xl flex flex-col transition-all duration-300 hover:-translate-y-1.5"
+      className="group relative w-full bg-gradient-to-br from-[#0c1020] to-[#07070d] border-[3px] border-[#ff9f00]/50 hover:border-[#ff9f00] rounded-tl-[32px] rounded-bl-[32px] rounded-br-[32px] rounded-tr-[88px] transition-all duration-500 hover:-translate-y-2 flex flex-col p-[3px] pb-12 overflow-visible shadow-2xl"
+      style={{
+        boxShadow: "0 15px 45px rgba(0,0,0,0.8), inset 0 0 20px rgba(255,159,0,0.05)",
+      }}
     >
       {/* 3D-like hover aura gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-accent-cyan/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-[#ff9f00]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-inherit pointer-events-none" />
 
-      {/* Photo / Vertical Image Slot (aspect 3:4) */}
-      <div className="relative aspect-[3/4] w-full overflow-hidden bg-zinc-950 flex items-center justify-center border-b border-white/5">
+      {/* Photo Wrapper with robust aspect-[3/4] flow */}
+      <div className="relative aspect-[3/4] w-full overflow-hidden rounded-tl-[28px] rounded-bl-[28px] rounded-tr-[82px] rounded-br-[12px] bg-zinc-950/40">
         {member.photo && !imageError ? (
-          <img
-            src={member.photo}
-            alt={member.name}
-            onError={() => setImageError(true)}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-          />
+          <div className="relative w-full h-full">
+            <img
+              src={member.photo}
+              alt={member.name}
+              onError={() => setImageError(true)}
+              className={`w-full h-full object-cover filter brightness-[1.05] contrast-[1.08] saturate-[0.92] transition-transform duration-700 ${
+                member.name.includes("Roopa") || member.name.includes("Sachidananda") || member.name.includes("Asma")
+                  ? "scale-[1.62] origin-[center_38%] group-hover:scale-[1.68]"
+                  : "group-hover:scale-[1.06]"
+              }`}
+            />
+            {/* Hologram details */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#07070d] via-transparent to-transparent opacity-60 pointer-events-none" />
+            <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,36,0)_95%,rgba(255,159,0,0.08)_95%)] bg-[size:100%_4px] opacity-40 pointer-events-none" />
+          </div>
         ) : (
           /* High-end Holographic Initials Placeholder */
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(139,92,246,0.1),transparent_70%)] flex items-center justify-center">
-            {/* Moving background line grids */}
-            <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:10px_10px]" />
-            <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-accent-violet/20 via-accent-cyan/15 to-transparent border border-white/10 flex items-center justify-center shadow-[0_0_20px_rgba(6,182,212,0.15)] group-hover:border-accent-cyan/30 transition-all duration-350">
-              <span className="font-display font-black text-xl text-transparent bg-clip-text bg-gradient-to-r from-white to-zinc-400">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,159,0,0.1),transparent_70%)] flex items-center justify-center">
+            <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:8px_8px]" />
+            <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-[#ff9f00]/25 via-accent-cyan/10 to-transparent border border-white/10 flex items-center justify-center shadow-[0_0_20px_rgba(255,159,0,0.15)] group-hover:border-[#ff9f00]/40 transition-all duration-350">
+              <span className="font-display font-black text-xl text-transparent bg-clip-text bg-gradient-to-r from-white to-zinc-450">
                 {getInitials(member.name)}
               </span>
             </div>
@@ -137,7 +148,7 @@ function MemberCard({ member, delay }: { member: Member; delay: number }) {
             href={member.linkedin}
             target="_blank"
             rel="noreferrer"
-            className="absolute top-4 right-4 p-2 rounded-lg bg-black/60 border border-white/10 hover:border-accent-cyan/50 text-zinc-400 hover:text-white backdrop-blur-md transition-all duration-300 pointer-events-auto clickable"
+            className="absolute top-4 right-4 p-2 rounded-lg bg-black/60 border border-white/10 hover:border-[#ff9f00] text-zinc-400 hover:text-white backdrop-blur-md transition-all duration-300 pointer-events-auto z-10 clickable"
           >
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
@@ -148,16 +159,21 @@ function MemberCard({ member, delay }: { member: Member; delay: number }) {
         )}
       </div>
 
-      {/* Details (Centered bold name & role) */}
-      <div className="p-5 flex flex-col items-center justify-center text-center">
-        <h3 className="font-display font-black text-base text-white group-hover:text-accent-cyan transition-colors mb-1">
+      {/* Custom absolute name plate popping out over the bottom */}
+      <div 
+        className="absolute bottom-[-16px] left-1/2 -translate-x-1/2 w-[88%] bg-gradient-to-r from-[#032d60] to-[#044085] border border-[#ff9f00]/45 group-hover:border-[#ff9f00] text-white text-center py-3.5 px-4 rounded-xl shadow-2xl transition-all duration-300 z-10 group-hover:shadow-[0_0_20px_rgba(255,159,0,0.2)]"
+        style={{
+          backdropFilter: "blur(12px)",
+        }}
+      >
+        <h3 className="font-display font-black text-[14px] text-white tracking-tight mb-0.5 leading-tight">
           {member.name}
         </h3>
-        <p className="text-[10px] text-zinc-450 font-black uppercase tracking-wider mb-0.5">
+        <p className="text-[9px] text-[#ff9f00] font-black uppercase tracking-widest mb-0.5">
           {member.role}
         </p>
         {member.dept && (
-          <p className="text-[8px] text-zinc-500 font-bold tracking-widest uppercase">
+          <p className="text-[7.5px] text-zinc-300 font-semibold tracking-wider uppercase opacity-90">
             {member.dept}
           </p>
         )}

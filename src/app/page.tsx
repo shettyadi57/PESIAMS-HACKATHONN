@@ -53,12 +53,34 @@ export default function Home() {
 
       {/* Main Page Content */}
       {!showIntro && (
-        <div className="relative min-h-screen bg-[#050505] text-white selection:bg-accent-cyan selection:text-black">
+        <div className="relative min-h-screen text-white selection:bg-accent-cyan selection:text-black">
           {/* Custom Difference blend Cursor */}
           <CustomCursor />
 
           {/* Premium Background System */}
           <BackgroundSystem />
+
+          {/* Liquid Cursor Spotlight Overlay - bleeds over content and highlights text */}
+          <div
+            className="fixed inset-0 pointer-events-none z-10 mix-blend-screen"
+            style={{
+              background: `
+                radial-gradient(
+                  calc(var(--cursor-glow-size, 350px) * 1.35) circle at var(--cursor-vx, -1000px) var(--cursor-vy, -1000px),
+                  rgba(6, 182, 212, calc(0.26 * var(--cursor-glow-intensity, 1))) 0%,
+                  rgba(139, 92, 246, calc(0.12 * var(--cursor-glow-intensity, 1))) 45%,
+                  transparent 100%
+                ),
+                radial-gradient(
+                  calc(var(--cursor-glow-size, 350px) * 0.95) circle at var(--cursor-vxb, -1000px) var(--cursor-vyb, -1000px),
+                  rgba(139, 92, 246, calc(0.14 * var(--cursor-glow-intensity, 1))) 0%,
+                  rgba(59, 130, 246, calc(0.06 * var(--cursor-glow-intensity, 1))) 50%,
+                  transparent 100%
+                )
+              `,
+              filter: "blur(8px)"
+            }}
+          />
 
           {/* Clean minimal navigation */}
           <Navbar />

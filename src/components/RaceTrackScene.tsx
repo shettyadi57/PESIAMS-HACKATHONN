@@ -1,223 +1,580 @@
-"use client";
+﻿"use client";
 
-import React, { useRef } from "react";
-import { motion, useScroll, useTransform, useSpring } from "framer-motion";
+import React, { useRef, useEffect, useCallback } from "react";
+import { motion, useScroll, useTransform, useSpring, useMotionValue, useVelocity } from "framer-motion";
 
-/* ─── Types ─────────────────────────────────────────────────────────────────── */
-interface Evt { time: string; title: string; desc: string; accent: "violet" | "cyan"; }
+/* --- Event Data --- */
+interface Evt { time: string; title: string; desc: string; accent: "violet" | "cyan"; emoji: string; }
 
-/* ─── Event data ─────────────────────────────────────────────────────────────── */
 const EVENTS: Evt[] = [
-  { time: "09:00 AM", title: "Registration & Check-in",                     desc: "Verify team IDs, collect badges, and get assigned to your coding station.",    accent: "violet" },
-  { time: "09:30 AM", title: "Inauguration Ceremony",                        desc: "Official welcome by faculty, introduction of jury and mentors.",                 accent: "cyan"   },
-  { time: "10:00 AM", title: "Problem Statements Revealed",                  desc: "Problem domains unlocked on the portal. Sprint clock starts NOW.",               accent: "cyan"   },
-  { time: "01:00 PM", title: "Working Lunch",                                desc: "Lunch served at stations — keep the momentum going.",                            accent: "violet" },
-  { time: "02:00 PM", title: "Mentoring Session",                            desc: "One-on-one guidance from industry experts and faculty mentors.",                  accent: "violet" },
-  { time: "03:00 PM", title: "Surprise Challenge Revealed",                  desc: "A hidden constraint or feature twist is introduced — adapt fast.",               accent: "cyan"   },
-  { time: "04:00 PM", title: "Final Submissions Deadline",                   desc: "Code committed, README submitted, demo video uploaded.",                         accent: "cyan"   },
-  { time: "04:30 PM", title: "Project Judging",                              desc: "Live demonstrations to the expert evaluation panel.",                            accent: "violet" },
-  { time: "05:00 PM", title: "Award Ceremony & Valediction",                 desc: "Prize distribution, certificates, and closing remarks.",                         accent: "cyan"   },
+  { time: "09:00 AM", title: "Registration & Check-in",            desc: "Verify team IDs, collect badges, and get assigned to your coding station.",    accent: "violet", emoji: "🎫" },
+  { time: "09:30 AM", title: "Inauguration Ceremony",              desc: "Official welcome by faculty, introduction of jury and mentors.",                 accent: "cyan",   emoji: "🎙️" },
+  { time: "10:00 AM", title: "Problem Statements Revealed",        desc: "Problem domains unlocked on the portal. Sprint clock starts NOW.",               accent: "cyan",   emoji: "💡" },
+  { time: "01:00 PM", title: "Working Lunch",                      desc: "Lunch served at stations — keep the momentum going.",                            accent: "violet", emoji: "🍱" },
+  { time: "02:00 PM", title: "Mentoring Session",                  desc: "One-on-one guidance from industry experts and faculty mentors.",                  accent: "violet", emoji: "🧠" },
+  { time: "03:00 PM", title: "Surprise Challenge Revealed",        desc: "A hidden constraint or feature twist is introduced — adapt fast.",               accent: "cyan",   emoji: "⚡" },
+  { time: "04:00 PM", title: "Final Submissions Deadline",         desc: "Code committed, README submitted, demo video uploaded.",                         accent: "cyan",   emoji: "🚀" },
+  { time: "04:30 PM", title: "Project Judging",                    desc: "Live demonstrations to the expert evaluation panel.",                            accent: "violet", emoji: "🔍" },
+  { time: "05:00 PM", title: "Award Ceremony & Valediction",       desc: "Prize distribution, certificates, and closing remarks.",                         accent: "cyan",   emoji: "🏆" },
 ];
 
 const C = {
-  violet: { hex: "#8b5cf6", glow: "rgba(139,92,246,0.6)", bg: "rgba(139,92,246,0.09)", border: "rgba(139,92,246,0.4)", text: "#c4b5fd", softGlow: "rgba(139,92,246,0.2)" },
-  cyan:   { hex: "#06b6d4", glow: "rgba(6,182,212,0.6)",  bg: "rgba(6,182,212,0.09)",  border: "rgba(6,182,212,0.4)",  text: "#67e8f9", softGlow: "rgba(6,182,212,0.2)"  },
+  violet: { hex: "#8b5cf6", glow: "rgba(139,92,246,0.9)", softGlow: "rgba(139,92,246,0.3)", bg: "rgba(139,92,246,0.08)", border: "rgba(139,92,246,0.5)", text: "#c4b5fd" },
+  cyan:   { hex: "#06b6d4", glow: "rgba(6,182,212,0.9)",  softGlow: "rgba(6,182,212,0.3)",  bg: "rgba(6,182,212,0.08)",  border: "rgba(6,182,212,0.5)",  text: "#67e8f9"  },
 } as const;
 
-/* ─── Dot indicator (own component so useTransform isn't inside a .map()) ─── */
-function DotIndicator({ index, total, accent, scrollYProgress }: {
-  index: number; total: number; accent: "violet" | "cyan"; scrollYProgress: any;
-}) {
-  const col    = C[accent];
-  const center = (index + 0.5) / total;
-  const hw     = 0.5 / total;
-  const opacity = useTransform(scrollYProgress, [center - hw, center, center + hw], [0.18, 1, 0.18]);
-  const scale   = useTransform(scrollYProgress, [center - hw, center, center + hw], [0.7, 1.4, 0.7]);
-  return (
-    <motion.div style={{ opacity, scale }}>
-      <div style={{ width: 8, height: 8, borderRadius: "50%", background: col.hex, boxShadow: `0 0 8px ${col.glow}` }} />
-    </motion.div>
-  );
+// Curve offset function for winding track
+function getCurveOffset(t: number, p: number) {
+  // t is depth: 0 at horizon, 1 at screen
+  // Winding track based on scroll position + depth
+  const trackPos = p * 8 + t * 2.8;
+  return (Math.sin(trackPos) * 160 + Math.cos(trackPos * 0.5) * 60) * t * t;
 }
 
-/* ─── Floating event card ────────────────────────────────────────────────────── */
-function RaceCard({ evt, index, total, scrollYProgress }: {
-  evt: Evt; index: number; total: number; scrollYProgress: any;
+/* --- Canvas Road Renderer --- */
+function RoadCanvas({ progress, speed }: { progress: number; speed: number }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animRef   = useRef<number>(0);
+  const stateRef  = useRef({ progress, speed });
+
+  useEffect(() => { stateRef.current = { progress, speed }; }, [progress, speed]);
+
+  const draw = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const W = canvas.width;
+    const H = canvas.height;
+    const { progress: p, speed: spd } = stateRef.current;
+
+    ctx.clearRect(0, 0, W, H);
+
+    // Sky gradient
+    const sky = ctx.createLinearGradient(0, 0, 0, H * 0.52);
+    sky.addColorStop(0, "#01010a");
+    sky.addColorStop(0.5, "#030214");
+    sky.addColorStop(1, "#05041a");
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, W, H * 0.52);
+
+    // Horizon glow
+    const hglow = ctx.createRadialGradient(W / 2, H * 0.45, 0, W / 2, H * 0.45, W * 0.7);
+    hglow.addColorStop(0, `rgba(139,92,246,${0.18 + spd * 0.2})`);
+    hglow.addColorStop(0.4, `rgba(6,182,212,${0.1 + spd * 0.15})`);
+    hglow.addColorStop(1, "transparent");
+    ctx.fillStyle = hglow;
+    ctx.fillRect(0, 0, W, H * 0.65);
+
+    // Horizon line
+    const vx = W / 2;
+    const vy = H * 0.42;
+
+    const roadHalfBase = W * 0.46;
+    const steps = 60;
+
+    // --- Draw Road Plane with Curve ---
+    const road = ctx.createLinearGradient(0, vy, 0, H);
+    road.addColorStop(0, "#07070d");
+    road.addColorStop(0.4, "#0c0a17");
+    road.addColorStop(1, "#120f24");
+
+    ctx.beginPath();
+    // Left edge from bottom to top
+    for (let i = steps; i >= 0; i--) {
+      const t = i / steps;
+      const y = vy + (H - vy) * t;
+      const curve = getCurveOffset(t, p);
+      const halfW = roadHalfBase * t;
+      ctx.lineTo(vx + curve - halfW, y);
+    }
+    // Right edge from top to bottom
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      const y = vy + (H - vy) * t;
+      const curve = getCurveOffset(t, p);
+      const halfW = roadHalfBase * t;
+      ctx.lineTo(vx + curve + halfW, y);
+    }
+    ctx.closePath();
+    ctx.fillStyle = road;
+    ctx.fill();
+
+    // --- Neon Rails ---
+    // Left Neon Rail
+    ctx.beginPath();
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      const y = vy + (H - vy) * t;
+      const curve = getCurveOffset(t, p);
+      const halfW = roadHalfBase * t;
+      if (i === 0) ctx.moveTo(vx + curve - halfW, y);
+      else ctx.lineTo(vx + curve - halfW, y);
+    }
+    ctx.lineWidth = 3 + spd * 2;
+    ctx.strokeStyle = "rgba(6,182,212,0.9)";
+    ctx.shadowColor = "#06b6d4";
+    ctx.shadowBlur = 15 + spd * 25;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Right Neon Rail
+    ctx.beginPath();
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      const y = vy + (H - vy) * t;
+      const curve = getCurveOffset(t, p);
+      const halfW = roadHalfBase * t;
+      if (i === 0) ctx.moveTo(vx + curve + halfW, y);
+      else ctx.lineTo(vx + curve + halfW, y);
+    }
+    ctx.lineWidth = 3 + spd * 2;
+    ctx.strokeStyle = "rgba(139,92,246,0.9)";
+    ctx.shadowColor = "#8b5cf6";
+    ctx.shadowBlur = 15 + spd * 25;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // --- Perspective Grid Rows ---
+    const GRID_ROWS = 22;
+    for (let i = 0; i < GRID_ROWS; i++) {
+      const t = Math.pow((i + (p * GRID_ROWS * 2.2 % 1)) / GRID_ROWS, 1.8);
+      if (t > 1) continue;
+      const y = vy + (H - vy) * t;
+      const curve = getCurveOffset(t, p);
+      const xSpan = roadHalfBase * t;
+      const alpha = Math.min(t * 1.5, 0.6);
+
+      ctx.beginPath();
+      ctx.moveTo(vx + curve - xSpan, y);
+      ctx.lineTo(vx + curve + xSpan, y);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = `rgba(139,92,246,${alpha * 0.22})`;
+      ctx.stroke();
+    }
+
+    // --- Center Lane Dashes ---
+    const DASH_COUNT = 18;
+    for (let d = 0; d < DASH_COUNT; d++) {
+      const rawT = (d + p * DASH_COUNT * 2.5 % 1) / DASH_COUNT;
+      const t = Math.pow(rawT, 1.6);
+      if (t > 0.98) continue;
+      const y = vy + (H - vy) * t;
+      const curve = getCurveOffset(t, p);
+      const dashW = 2 + t * 4;
+      const alpha = Math.min(t * 1.8, 0.85);
+
+      ctx.beginPath();
+      ctx.arc(vx + curve, y, dashW, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+      ctx.fill();
+    }
+
+    // --- 3D Checkpoint Gates (Arches) ---
+    const totalEvents = EVENTS.length;
+    const TRACK_END = 0.92;
+    EVENTS.forEach((evt, idx) => {
+      const gatePos = ((idx + 0.5) / totalEvents) * TRACK_END;
+      const dist = gatePos - p;
+      // Render gate if it is ahead and within view
+      if (dist > -0.05 && dist < 0.25) {
+        // Map distance to depth t (0 to 1)
+        const t = 1 - (dist / 0.25);
+        const depth = Math.pow(t, 1.7); // perspective scaling
+        if (depth > 0.02 && depth < 0.98) {
+          const y = vy + (H - vy) * depth;
+          const curve = getCurveOffset(depth, p);
+          const rW = roadHalfBase * depth;
+          
+          // Gate dimensions
+          const gateW = rW * 1.15;
+          const gateH = 140 * depth;
+          const col = C[evt.accent];
+
+          // Draw Glowing Gate Frame
+          ctx.beginPath();
+          ctx.moveTo(vx + curve - gateW, y);
+          ctx.lineTo(vx + curve - gateW, y - gateH);
+          ctx.lineTo(vx + curve + gateW, y - gateH);
+          ctx.lineTo(vx + curve + gateW, y);
+          
+          ctx.lineWidth = 2.5 + depth * 5;
+          ctx.strokeStyle = col.hex;
+          ctx.shadowColor = col.hex;
+          ctx.shadowBlur = 10 + depth * 25;
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+
+          // Gate accent blocks on top corners
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(vx + curve - gateW - 2, y - gateH - 4, 6, 8);
+          ctx.fillRect(vx + curve + gateW - 4, y - gateH - 4, 6, 8);
+
+          // Render Gate Label Text
+          if (depth > 0.15) {
+            ctx.save();
+            ctx.fillStyle = "#ffffff";
+            ctx.font = `bold ${Math.max(8, 14 * depth)}px sans-serif`;
+            ctx.textAlign = "center";
+            ctx.fillText(`GATE ${String(idx + 1).padStart(2, "0")}`, vx + curve, y - gateH - 10);
+            ctx.restore();
+          }
+        }
+      }
+    });
+
+    // --- Speed lines (F1 feeling) ---
+    if (spd > 0.08) {
+      const lineCount = Math.floor(spd * 80);
+      for (let i = 0; i < lineCount; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const startR = 20 + Math.random() * 80;
+        const len    = 40 + Math.random() * 140 * spd;
+        const sx = vx + Math.cos(angle) * startR;
+        const sy = vy * 0.9 + Math.sin(angle) * startR * 0.4;
+        const ex = vx + Math.cos(angle) * (startR + len);
+        const ey = vy * 0.9 + Math.sin(angle) * (startR + len) * 0.4;
+        const grad = ctx.createLinearGradient(sx, sy, ex, ey);
+        grad.addColorStop(0, "rgba(255,255,255,0.0)");
+        grad.addColorStop(0.3, `rgba(200,200,255,${0.18 * spd})`);
+        grad.addColorStop(1, "rgba(255,255,255,0.0)");
+        ctx.beginPath();
+        ctx.moveTo(sx, sy);
+        ctx.lineTo(ex, ey);
+        ctx.lineWidth = 0.8;
+        ctx.strokeStyle = grad;
+        ctx.stroke();
+      }
+    }
+
+    // Stars
+    const STAR_COUNT = 85;
+    for (let i = 0; i < STAR_COUNT; i++) {
+      const sx2 = ((i * 7919 + 1234) % 10000) / 10000 * W;
+      const sy2 = ((i * 6271 + 4567) % 10000) / 10000 * H * 0.44;
+      const sR  = ((i * 3571) % 100) / 100;
+      const twinkle = 0.3 + Math.sin(Date.now() / 1000 + i) * 0.3;
+      ctx.beginPath();
+      ctx.arc(sx2, sy2, sR * 1.4, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,255,255,${twinkle * (0.35 + sR * 0.5)})`;
+      ctx.fill();
+    }
+
+    animRef.current = requestAnimationFrame(draw);
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const resize = () => {
+      canvas.width  = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+    };
+    resize();
+    const ro = new ResizeObserver(resize);
+    ro.observe(canvas);
+    animRef.current = requestAnimationFrame(draw);
+    return () => {
+      ro.disconnect();
+      cancelAnimationFrame(animRef.current);
+    };
+  }, [draw]);
+
+  return <canvas ref={canvasRef} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />;
+}
+
+/* --- Checkpoint Info Pop Card --- */
+function Checkpoint({ evt, index, total, scrollYProgress }: {
+  evt: Evt; index: number; total: number; scrollYProgress: ReturnType<typeof useSpring>;
 }) {
-  const isLeft = index % 2 === 0;
   const col    = C[evt.accent];
+  const isLeft = index % 2 === 0;
 
-  // Each card occupies a window that is 1/total of the scroll range
-  // Leave the last 15% for the finish line
-  const TRACK_END = 0.85;
-  const center    = ((index + 0.5) / total) * TRACK_END;
-  const hw        = (TRACK_END / total) * 0.55;
+  const TRACK_END  = 0.92;
+  const center     = ((index + 0.5) / total) * TRACK_END;
+  const hw         = (TRACK_END / total) * 0.6;
 
-  const opacity = useTransform(scrollYProgress, [center - hw * 1.4, center - hw * 0.4, center, center + hw * 0.4, center + hw * 1.4], [0, 0.9, 1, 0.9, 0]);
-  const y       = useTransform(scrollYProgress, [center - hw * 1.4, center, center + hw * 1.4], [70, 0, -70]);
-  const scale   = useTransform(scrollYProgress, [center - hw * 1.4, center, center + hw * 1.4], [0.5, 1, 0.72]);
-  const xPull   = 250;
-  const x       = useTransform(scrollYProgress,
-    [center - hw * 1.4, center, center + hw * 1.4],
-    isLeft ? [-(xPull - 50), -xPull, -(xPull - 20)] : [xPull - 50, xPull, xPull - 20],
+  // Immersive 3D Pop transition
+  const opacity = useTransform(scrollYProgress,
+    [center - hw * 1.3, center - hw * 0.4, center, center + hw * 0.4, center + hw * 1.1],
+    [0, 1, 1, 1, 0]
+  );
+  
+  const y = useTransform(scrollYProgress,
+    [center - hw * 1.3, center - hw * 0.4, center, center + hw * 0.4, center + hw * 1.1],
+    [100, 10, 0, -10, -100]
+  );
+
+  const x = useTransform(scrollYProgress,
+    [center - hw * 1.3, center - hw * 0.4, center, center + hw * 0.4, center + hw * 1.1],
+    isLeft ? [-360, -290, -280, -295, -370] : [360, 290, 280, 295, 370]
+  );
+
+  const scale = useTransform(scrollYProgress,
+    [center - hw * 1.3, center - hw * 0.4, center, center + hw * 0.4],
+    [0.7, 1.05, 1, 0.85]
+  );
+
+  // Rotation creates an offset banking perspective look
+  const rotateY = useTransform(scrollYProgress,
+    [center - hw * 1.3, center, center + hw * 1.1],
+    isLeft ? [22, 5, -12] : [-22, -5, 12]
   );
 
   return (
     <motion.div style={{
-      position: "absolute", left: "50%", top: "43%",
-      width: 285, marginLeft: isLeft ? -285 : 0,
-      opacity, y, x, scale, pointerEvents: "none",
+      position: "absolute",
+      left: "50%",
+      top: "40%",
+      opacity, y, x, scale, rotateY,
+      pointerEvents: "none",
+      transformStyle: "preserve-3d",
+      zIndex: 25,
     }}>
-      {/* Connector line from card to road */}
+      {/* 3D Glass Card Pop Layout */}
       <div style={{
-        position: "absolute", top: "50%",
-        [isLeft ? "right" : "left"]: -2,
-        width: 36, height: 1,
-        background: `linear-gradient(${isLeft ? "to left" : "to right"}, transparent, ${col.hex}90)`,
-        transform: "translateY(-50%)",
-      }} />
-      {/* Dot at road side */}
-      <div style={{
-        position: "absolute", top: "50%",
-        [isLeft ? "right" : "left"]: -6,
-        width: 6, height: 6, borderRadius: "50%",
-        background: col.hex, boxShadow: `0 0 10px ${col.glow}`,
-        transform: "translateY(-50%)",
-      }} />
-
-      {/* Card body */}
-      <div style={{
-        background: "linear-gradient(135deg, rgba(8,8,14,0.96) 0%, rgba(14,12,24,0.94) 100%)",
+        width: 300,
+        background: "linear-gradient(135deg, rgba(8, 7, 16, 0.94) 0%, rgba(18, 14, 32, 0.92) 100%)",
         border: `1px solid ${col.border}`,
-        borderLeft:  isLeft  ? `3px solid ${col.hex}` : `1px solid ${col.border}`,
-        borderRight: !isLeft ? `3px solid ${col.hex}` : `1px solid ${col.border}`,
-        borderRadius: 16,
-        padding: "16px 18px",
-        backdropFilter: "blur(18px)",
-        boxShadow: `0 0 0 1px rgba(255,255,255,0.04) inset, 0 8px 40px rgba(0,0,0,0.8), 0 0 30px ${col.softGlow}`,
+        borderLeft: isLeft ? `4px solid ${col.hex}` : `1px solid ${col.border}`,
+        borderRight: !isLeft ? `4px solid ${col.hex}` : `1px solid ${col.border}`,
+        borderRadius: 20,
+        padding: "20px 22px",
+        backdropFilter: "blur(28px)",
+        boxShadow: `
+          0 0 0 1px rgba(255,255,255,0.05) inset,
+          0 15px 50px rgba(0,0,0,0.9),
+          0 0 35px ${col.softGlow}
+        `,
       }}>
-        {/* Time */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+        {/* Top bar with tag */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 20 }}>{evt.emoji}</span>
+            <span style={{
+              fontFamily: "var(--font-display,'Outfit',system-ui)",
+              fontSize: 10, fontWeight: 900, letterSpacing: "0.22em",
+              textTransform: "uppercase", color: col.text,
+            }}>{evt.time}</span>
+          </div>
           <span style={{
-            fontFamily: "var(--font-display, 'Outfit', system-ui)",
-            fontSize: 10, fontWeight: 900, letterSpacing: "0.22em",
-            textTransform: "uppercase", color: col.text,
-          }}>{evt.time}</span>
-          <span style={{
-            fontFamily: "var(--font-display, 'Outfit', system-ui)",
-            fontSize: 9, fontWeight: 900, letterSpacing: "0.18em",
-            textTransform: "uppercase", color: col.hex,
+            fontFamily: "var(--font-display,'Outfit',system-ui)",
+            fontSize: 9, fontWeight: 900, letterSpacing: "0.15em",
             background: col.bg, border: `1px solid ${col.border}`,
-            padding: "2px 8px", borderRadius: 20, opacity: 0.9,
-          }}>{String(index + 1).padStart(2, "0")}</span>
+            color: col.hex, padding: "3px 10px", borderRadius: 20,
+          }}>
+            STAGE {String(index + 1).padStart(2, "0")}
+          </span>
         </div>
 
         {/* Title */}
         <h3 style={{
-          fontFamily: "var(--font-display, 'Outfit', system-ui)",
-          fontSize: 14, fontWeight: 900, color: "#ffffff",
-          lineHeight: 1.25, letterSpacing: "-0.01em", margin: "0 0 7px",
+          fontFamily: "var(--font-display,'Outfit',system-ui)",
+          fontSize: 16, fontWeight: 900, color: "#fff",
+          lineHeight: 1.25, letterSpacing: "-0.015em", margin: "0 0 10px",
         }}>{evt.title}</h3>
 
-        {/* Desc */}
+        {/* Description */}
         <p style={{
-          fontFamily: "var(--font-sans, system-ui)",
-          fontSize: 11, color: "#71717a",
-          lineHeight: 1.55, margin: 0,
+          fontFamily: "var(--font-sans,system-ui)",
+          fontSize: 12, color: "#a1a1aa", lineHeight: 1.6, margin: 0,
         }}>{evt.desc}</p>
+
+        {/* Status indicator bar */}
+        <div style={{
+          marginTop: 15, height: 2, borderRadius: 2,
+          background: `linear-gradient(to right, ${col.hex}, transparent)`,
+        }} />
       </div>
     </motion.div>
   );
 }
 
-/* ─── Checkered finish line ─────────────────────────────────────────────────── */
-function FinishLine({ scrollYProgress }: { scrollYProgress: any }) {
-  // Appears from scroll 0.82 → end
-  const opacity  = useTransform(scrollYProgress, [0.78, 0.88, 1.0], [0, 1, 1]);
-  const scale    = useTransform(scrollYProgress, [0.78, 0.88, 1.0], [0.2, 1, 1]);
-  const y        = useTransform(scrollYProgress, [0.78, 0.88, 1.0], [80, 0, 0]);
-  // Glow pulse driven by scroll at end
-  const glowSize = useTransform(scrollYProgress, [0.88, 1.0], [20, 55]);
+/* --- HUD Speedometer --- */
+function Speedometer({ speed, progress }: { speed: number; progress: number }) {
+  const kmh  = Math.round(progress * 280 + speed * 120);
+  const gear = speed > 0.6 ? "6" : speed > 0.4 ? "5" : speed > 0.25 ? "4" : speed > 0.12 ? "3" : speed > 0.04 ? "2" : "1";
 
   return (
-    <motion.div
-      style={{
-        position: "absolute", left: "50%", top: "38%",
-        transform: "translateX(-50%)",
-        opacity, scale, y,
-        width: "clamp(360px, 44vw, 620px)",
-        pointerEvents: "none",
-        zIndex: 25,
-      }}
-    >
-      {/* ── FINISH banner (checkered) ── */}
-      <div style={{ position: "relative", marginBottom: 16 }}>
-        {/* Neon "FINISH" text */}
-        <div style={{ textAlign: "center", marginBottom: 10 }}>
-          <span style={{
-            fontFamily: "var(--font-display, 'Outfit', system-ui)",
-            fontSize: "clamp(28px, 3.5vw, 48px)",
-            fontWeight: 900,
-            letterSpacing: "0.25em",
-            color: "#ffffff",
-            textTransform: "uppercase",
-            textShadow: "0 0 20px #06b6d4, 0 0 40px #06b6d4, 0 0 80px rgba(6,182,212,0.5)",
-          }}>FINISH</span>
+    <div style={{
+      position: "absolute", bottom: 24, left: 24, zIndex: 40,
+      display: "flex", alignItems: "flex-end", gap: 14, pointerEvents: "none",
+    }}>
+      {/* RPM Tachometer */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 3, alignItems: "center" }}>
+        <span style={{
+          fontFamily: "var(--font-display,'Outfit',system-ui)",
+          fontSize: 7, fontWeight: 900, letterSpacing: "0.2em",
+          textTransform: "uppercase", color: "rgba(255,255,255,0.25)",
+        }}>RPM</span>
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 2 }}>
+          {Array.from({ length: 16 }).map((_, i) => {
+            const active   = i / 16 < speed + 0.05;
+            const isDanger = i >= 13;
+            const barColor = isDanger ? "#ef4444" : i >= 10 ? "#f59e0b" : "#06b6d4";
+            return (
+              <div key={i} style={{
+                width: 3.5, height: 8 + i * 1.5, borderRadius: 2,
+                background: active ? barColor : "rgba(255,255,255,0.07)",
+                boxShadow: active ? `0 0 6px ${barColor}` : "none",
+                transition: "background 0.12s ease, box-shadow 0.12s ease",
+              }} />
+            );
+          })}
         </div>
-
-        {/* Checkered bar */}
-        <div style={{
-          width: "100%", height: 28,
-          backgroundImage: "repeating-conic-gradient(#ffffff 0deg 90deg, #000000 90deg 180deg)",
-          backgroundSize: "28px 28px",
-          borderRadius: 4,
-          border: "1.5px solid rgba(255,255,255,0.25)",
-          boxShadow: "0 0 24px rgba(6,182,212,0.5), 0 0 8px rgba(139,92,246,0.5)",
-        }} />
-
-        {/* Thin glowing line below checker */}
-        <div style={{
-          width: "100%", height: 2, marginTop: 4,
-          background: "linear-gradient(to right, transparent, #06b6d4, #8b5cf6, #06b6d4, transparent)",
-          borderRadius: 2,
-        }} />
       </div>
 
-      {/* ── Final event card (Award Ceremony) ── */}
-      <motion.div
-        style={{ opacity: useTransform(scrollYProgress, [0.88, 0.95], [0, 1]) }}
-      >
+      {/* Speed readout */}
+      <div style={{
+        background: "rgba(0,0,0,0.7)", border: "1px solid rgba(6,182,212,0.2)",
+        borderRadius: 12, padding: "8px 14px", backdropFilter: "blur(16px)",
+      }}>
         <div style={{
-          background: "linear-gradient(135deg, rgba(8,8,18,0.98) 0%, rgba(14,10,30,0.96) 100%)",
-          border: "1px solid rgba(6,182,212,0.4)",
-          borderTop: "3px solid #06b6d4",
-          borderRadius: 18,
-          padding: "20px 24px",
-          backdropFilter: "blur(24px)",
-          boxShadow: "0 0 60px rgba(6,182,212,0.15), 0 0 30px rgba(139,92,246,0.12), 0 20px 60px rgba(0,0,0,0.9), inset 0 0 30px rgba(6,182,212,0.04)",
+          fontFamily: "var(--font-display,'Outfit',system-ui)",
+          fontSize: 28, fontWeight: 900, lineHeight: 1,
+          color: speed > 0.5 ? "#f59e0b" : "#06b6d4",
+          letterSpacing: "-0.03em",
+          textShadow: `0 0 20px ${speed > 0.5 ? "rgba(245,158,11,0.8)" : "rgba(6,182,212,0.8)"}`,
+          transition: "color 0.3s ease, text-shadow 0.3s ease",
+        }}>{kmh}</div>
+        <div style={{
+          fontFamily: "var(--font-display,'Outfit',system-ui)",
+          fontSize: 7, fontWeight: 900, letterSpacing: "0.2em",
+          color: "rgba(255,255,255,0.3)", textTransform: "uppercase", marginTop: 2,
+        }}>KM/H</div>
+      </div>
+
+      {/* Gear */}
+      <div style={{
+        background: "rgba(0,0,0,0.7)",
+        border: `1px solid ${speed > 0.5 ? "rgba(245,158,11,0.4)" : "rgba(139,92,246,0.25)"}`,
+        borderRadius: 10, padding: "6px 12px", backdropFilter: "blur(16px)",
+        transition: "border-color 0.3s ease",
+      }}>
+        <div style={{
+          fontFamily: "var(--font-display,'Outfit',system-ui)",
+          fontSize: 22, fontWeight: 900, lineHeight: 1,
+          color: speed > 0.5 ? "#f59e0b" : "#8b5cf6",
+          textShadow: `0 0 16px ${speed > 0.5 ? "rgba(245,158,11,0.9)" : "rgba(139,92,246,0.9)"}`,
+          transition: "all 0.2s ease",
+        }}>{gear}</div>
+        <div style={{
+          fontFamily: "var(--font-display,'Outfit',system-ui)",
+          fontSize: 7, fontWeight: 900, letterSpacing: "0.2em",
+          color: "rgba(255,255,255,0.3)", textTransform: "uppercase", marginTop: 2,
+        }}>GEAR</div>
+      </div>
+    </div>
+  );
+}
+
+/* --- Minimap / Progress HUD --- */
+function MinimapHUD({ progress, currentIndex }: { progress: number; currentIndex: number }) {
+  return (
+    <div style={{
+      position: "absolute", top: 24, right: 24, zIndex: 40,
+      pointerEvents: "none", display: "flex", flexDirection: "column",
+      gap: 6, alignItems: "flex-end",
+    }}>
+      <div style={{
+        background: "rgba(0,0,0,0.65)", border: "1px solid rgba(255,255,255,0.08)",
+        borderRadius: 10, padding: "6px 14px", backdropFilter: "blur(16px)",
+        display: "flex", alignItems: "center", gap: 8,
+      }}>
+        <span style={{
+          fontFamily: "var(--font-display,'Outfit',system-ui)",
+          fontSize: 9, fontWeight: 900, letterSpacing: "0.2em",
+          color: "rgba(255,255,255,0.28)", textTransform: "uppercase",
+        }}>GATE</span>
+        <span style={{
+          fontFamily: "var(--font-display,'Outfit',system-ui)",
+          fontSize: 13, fontWeight: 900, color: "#06b6d4",
+          letterSpacing: "-0.01em", textShadow: "0 0 12px rgba(6,182,212,0.8)",
+        }}>{String(currentIndex + 1).padStart(2, "0")} / {String(EVENTS.length).padStart(2, "0")}</span>
+      </div>
+      <div style={{
+        display: "flex", flexDirection: "column", gap: 5,
+        alignItems: "center", padding: "8px 0",
+      }}>
+        {EVENTS.map((evt, i) => {
+          const dotProgress = (i + 0.5) / EVENTS.length;
+          const isPassed    = progress > dotProgress;
+          const isActive    = Math.abs(progress - dotProgress) < 0.5 / EVENTS.length + 0.04;
+          const col         = C[evt.accent];
+          return (
+            <div key={i} style={{
+              width: isActive ? 10 : 6, height: isActive ? 10 : 6,
+              borderRadius: "50%",
+              background: isPassed || isActive ? col.hex : "rgba(255,255,255,0.1)",
+              boxShadow: isActive ? `0 0 10px ${col.glow}, 0 0 20px ${col.softGlow}` : "none",
+              transition: "all 0.35s ease",
+            }} />
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* --- Finish Overlay --- */
+function FinishOverlay({ scrollYProgress }: { scrollYProgress: ReturnType<typeof useSpring> }) {
+  const opacity = useTransform(scrollYProgress, [0.84, 0.94, 1], [0, 1, 1]);
+  const scale   = useTransform(scrollYProgress, [0.84, 0.94], [0.3, 1]);
+  const y       = useTransform(scrollYProgress, [0.84, 0.94], [60, 0]);
+  const awardOp = useTransform(scrollYProgress, [0.92, 1], [0, 1]);
+
+  return (
+    <motion.div style={{
+      position: "absolute", left: "50%", top: "36%",
+      transform: "translateX(-50%)",
+      opacity, scale, y, zIndex: 30, pointerEvents: "none",
+      width: "clamp(340px, 46vw, 640px)",
+    }}>
+      <div style={{ textAlign: "center", marginBottom: 14 }}>
+        <span style={{
+          fontFamily: "var(--font-display,'Outfit',system-ui)",
+          fontSize: "clamp(30px, 4vw, 56px)", fontWeight: 900, letterSpacing: "0.3em",
+          color: "#ffffff", display: "block",
+          textShadow: "0 0 24px #06b6d4, 0 0 60px #06b6d4, 0 0 100px rgba(6,182,212,0.5)",
+        }}>FINISH</span>
+      </div>
+      <div style={{
+        width: "100%", height: 28,
+        backgroundImage: "repeating-conic-gradient(#ffffff 0deg 90deg, #000000 90deg 180deg)",
+        backgroundSize: "28px 28px", borderRadius: 4,
+        boxShadow: "0 0 30px rgba(6,182,212,0.6), 0 0 10px rgba(139,92,246,0.5)",
+      }} />
+      <div style={{
+        height: 2, marginTop: 5,
+        background: "linear-gradient(to right, transparent, #06b6d4, #8b5cf6, #06b6d4, transparent)",
+        borderRadius: 2,
+      }} />
+      <motion.div style={{ opacity: awardOp, marginTop: 20 }}>
+        <div style={{
+          background: "linear-gradient(135deg, rgba(6,6,16,0.98) 0%, rgba(14,10,30,0.96) 100%)",
+          border: "1px solid rgba(6,182,212,0.4)", borderTop: "3px solid #06b6d4",
+          borderRadius: 20, padding: "22px 28px", backdropFilter: "blur(28px)",
+          boxShadow: "0 0 80px rgba(6,182,212,0.12), 0 24px 80px rgba(0,0,0,0.9)",
           textAlign: "center",
         }}>
-          <div style={{
-            fontSize: 36, marginBottom: 8, filter: "drop-shadow(0 0 12px rgba(251,191,36,0.8))",
-          }}>🏆</div>
+          <div style={{ fontSize: 40, marginBottom: 10, filter: "drop-shadow(0 0 16px rgba(251,191,36,0.9))" }}>🏆</div>
           <p style={{
-            fontFamily: "var(--font-display, 'Outfit', system-ui)",
-            fontSize: 11, fontWeight: 900, letterSpacing: "0.22em",
+            fontFamily: "var(--font-display,'Outfit',system-ui)",
+            fontSize: 10, fontWeight: 900, letterSpacing: "0.22em",
             textTransform: "uppercase", color: "#22d3ee", marginBottom: 6,
-          }}>Sep 5, 2026 — 05:00 PM</p>
+          }}>Sep 5, 2026 · 05:00 PM</p>
           <h3 style={{
-            fontFamily: "var(--font-display, 'Outfit', system-ui)",
-            fontSize: 20, fontWeight: 900, color: "#ffffff",
+            fontFamily: "var(--font-display,'Outfit',system-ui)",
+            fontSize: 22, fontWeight: 900, color: "#fff",
             lineHeight: 1.2, letterSpacing: "-0.01em", marginBottom: 8,
           }}>Award Ceremony & Valediction</h3>
           <p style={{
-            fontFamily: "var(--font-sans, system-ui)",
-            fontSize: 12, color: "#71717a", lineHeight: 1.5,
+            fontFamily: "var(--font-sans,system-ui)",
+            fontSize: 12, color: "#71717a", lineHeight: 1.55,
           }}>Prize distribution, certificates, and closing remarks at PESIAMS Shivamogga.</p>
-
-          {/* Decorative strip */}
           <div style={{
-            marginTop: 14, height: 2,
+            marginTop: 16, height: 2,
             background: "linear-gradient(to right, transparent, #8b5cf6, #06b6d4, #8b5cf6, transparent)",
             borderRadius: 2,
           }} />
@@ -227,45 +584,57 @@ function FinishLine({ scrollYProgress }: { scrollYProgress: any }) {
   );
 }
 
-/* ─── Flag posts flanking the finish line ─────────────────────────────────────── */
-function FlagPost({ side, scrollYProgress }: { side: "left" | "right"; scrollYProgress: any }) {
-  const opacity = useTransform(scrollYProgress, [0.80, 0.90], [0, 1]);
-  const y       = useTransform(scrollYProgress, [0.80, 0.90], [60, 0]);
-  const color   = side === "left" ? "#06b6d4" : "#8b5cf6";
-
+/* --- Speed / Vignette Overlay --- */
+function SpeedOverlay({ speed }: { speed: number }) {
+  const blur   = Math.min(speed * 10, 7);
+  const vigInt = Math.min(speed * 0.9, 0.7);
   return (
-    <motion.div style={{
-      position: "absolute",
-      top: "25%",
-      [side]: "calc(50% - clamp(200px, 24vw, 340px) - 18px)",
-      opacity, y,
-      pointerEvents: "none", zIndex: 24,
-    }}>
-      {/* Pole */}
+    <>
       <div style={{
-        width: 3, height: 140,
-        background: `linear-gradient(to bottom, ${color}, transparent)`,
-        margin: "0 auto",
-        boxShadow: `0 0 12px ${color}88`,
+        position: "absolute", inset: 0, zIndex: 35,
+        background: `radial-gradient(ellipse 70% 100% at 50% 50%, transparent 40%, rgba(0,0,0,${vigInt}) 100%)`,
+        pointerEvents: "none",
       }} />
-      {/* Flag */}
       <div style={{
-        width: 52, height: 34,
-        background: "repeating-conic-gradient(#fff 0deg 90deg, #000 90deg 180deg)",
-        backgroundSize: "14px 14px",
-        borderRadius: "0 4px 4px 0",
-        boxShadow: `0 0 16px ${color}66`,
-        border: `1.5px solid ${color}88`,
-        marginLeft: 3,
-        position: "absolute",
-        top: 0,
-        transform: "translateY(-100%)",
+        position: "absolute", inset: "0 0 auto 0", height: "45%",
+        background: "linear-gradient(to bottom, rgba(0,0,2,0.85) 0%, transparent)",
+        zIndex: 10, pointerEvents: "none",
       }} />
-    </motion.div>
+      {blur > 1 && (
+        <div style={{
+          position: "absolute", inset: 0, zIndex: 36,
+          backdropFilter: `blur(${blur}px)`,
+          maskImage: "radial-gradient(ellipse 40% 60% at 50% 50%, transparent 40%, black 100%)",
+          WebkitMaskImage: "radial-gradient(ellipse 40% 60% at 50% 50%, transparent 40%, black 100%)",
+          pointerEvents: "none",
+        }} />
+      )}
+    </>
   );
 }
 
-/* ─── Main scene (no SSR) ────────────────────────────────────────────────────── */
+/* --- Camera Shake --- */
+function CameraShake({ speed }: { speed: number }) {
+  const shakeX = useMotionValue(0);
+  const shakeY = useMotionValue(0);
+  useEffect(() => {
+    if (speed < 0.1) { shakeX.set(0); shakeY.set(0); return; }
+    const id = setInterval(() => {
+      const amp = speed * 4;
+      shakeX.set((Math.random() - 0.5) * amp);
+      shakeY.set((Math.random() - 0.5) * amp * 0.6);
+    }, 50);
+    return () => clearInterval(id);
+  }, [speed, shakeX, shakeY]);
+  return (
+    <motion.div style={{
+      position: "absolute", inset: 0, zIndex: 38,
+      x: shakeX, y: shakeY, pointerEvents: "none",
+    }} />
+  );
+}
+
+/* --- Main Scene --- */
 export default function RaceTrackScene() {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -273,176 +642,135 @@ export default function RaceTrackScene() {
     target: containerRef,
     offset: ["start start", "end end"],
   });
-  const smooth = useSpring(scrollYProgress, { stiffness: 50, damping: 16 });
 
-  const gridY  = useTransform(smooth, [0, 1], ["0%", "700%"]);
-  const dashY  = useTransform(smooth, [0, 1], [0, 1400]);
+  const smooth        = useSpring(scrollYProgress, { stiffness: 55, damping: 18 });
+  const rawVelocity   = useVelocity(scrollYProgress);
+  const smoothVelocity = useSpring(rawVelocity, { stiffness: 40, damping: 22 });
+
+  const [renderProgress, setRenderProgress] = React.useState(0);
+  const [renderSpeed,    setRenderSpeed]    = React.useState(0);
+  const [currentIndex,   setCurrentIndex]   = React.useState(0);
+
+  useEffect(() => {
+    const unsubP = smooth.on("change", (v) => {
+      setRenderProgress(v);
+      setCurrentIndex(Math.min(Math.floor(v * EVENTS.length), EVENTS.length - 1));
+    });
+    const unsubV = smoothVelocity.on("change", (v) => {
+      setRenderSpeed(Math.min(Math.abs(v) * 3.5, 1));
+    });
+    return () => { unsubP(); unsubV(); };
+  }, [smooth, smoothVelocity]);
+
+  // Compute camera banking tilt directly from both winding curvature and scroll velocity
+  const currentBend = Math.sin(renderProgress * 8 + 0.8 * 2.8);
+  const totalTilt = useTransform(smoothVelocity, (vel) => {
+    const bendTilt = currentBend * -15; // tilt depending on how road curves
+    const scrollGForce = Math.min(Math.max(vel * -5, -8), 8);
+    return bendTilt + scrollGForce;
+  });
+
+  const scrollHint = useTransform(smooth, [0, 0.08], [1, 0]);
+  const checkLabel = useTransform(smooth, [0.04, 0.12], [0, 1]);
 
   return (
-    <div ref={containerRef} style={{ height: `${EVENTS.length * 120 + 80}vh` }}>
-      <div className="sticky top-0 h-screen w-full overflow-hidden" style={{ background: "#030305" }}>
+    <div ref={containerRef} style={{ height: `${EVENTS.length * 130 + 100}vh` }}>
+      <div className="sticky top-0 h-screen w-full overflow-hidden" style={{ background: "#000008" }}>
 
-        {/* ── Background ambience ── */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div style={{ position: "absolute", top: "20%", left: "15%", width: "45vw", height: "25vw", borderRadius: "50%", background: "rgba(139,92,246,0.05)", filter: "blur(100px)" }} />
-          <div style={{ position: "absolute", top: "20%", right: "15%", width: "45vw", height: "25vw", borderRadius: "50%", background: "rgba(6,182,212,0.05)", filter: "blur(100px)" }} />
-          {/* Star dots */}
-          <div style={{
-            position: "absolute", inset: 0,
-            backgroundImage: "radial-gradient(rgba(255,255,255,0.45) 1px, transparent 1px)",
-            backgroundSize: "52px 52px", opacity: 0.12,
-          }} />
-        </div>
-
-        {/* ── CSS Perspective Road ── */}
-        <div style={{
+        {/* Camera container — tilts on scroll velocity and track curvature */}
+        <motion.div style={{
           position: "absolute", inset: 0,
-          perspective: "480px", perspectiveOrigin: "50% 40%",
+          rotateZ: totalTilt,
+          transformPerspective: 1200,
         }}>
-          {/* Road plane */}
-          <div style={{
-            position: "absolute",
-            left: "50%", bottom: "-10vh",
-            width: "clamp(280px, 34vw, 520px)",
-            height: "220vh",
-            transform: "translateX(-50%) rotateX(70deg)",
-            transformOrigin: "50% bottom",
-            background: "linear-gradient(to top, #090910 0%, #060608 60%, #040406 100%)",
-            overflow: "hidden",
-          }}>
-            {/* Moving perspective grid */}
-            <motion.div style={{
-              position: "absolute", inset: 0,
-              backgroundImage: `
-                linear-gradient(to bottom, rgba(139,92,246,0.16) 1px, transparent 1px),
-                linear-gradient(to right, rgba(6,182,212,0.06) 1px, transparent 1px)
-              `,
-              backgroundSize: "36px 52px",
-              backgroundPositionY: gridY,
-            }} />
+          <RoadCanvas progress={renderProgress} speed={renderSpeed} />
 
-            {/* Center lane dashes */}
-            <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", width: 3, top: 0, bottom: 0, overflow: "hidden" }}>
-              <motion.div style={{ y: dashY }}>
-                {Array.from({ length: 36 }).map((_, i) => (
-                  <div key={i} style={{ width: "100%", height: 46, background: "rgba(255,255,255,0.5)", borderRadius: 2, marginBottom: 36 }} />
-                ))}
-              </motion.div>
-            </div>
-
-            {/* 1/4 lane side markers */}
-            {["25%", "75%"].map((pos) => (
-              <div key={pos} style={{ position: "absolute", top: 0, bottom: 0, left: pos, width: 2, overflow: "hidden" }}>
-                <motion.div style={{ y: dashY }}>
-                  {Array.from({ length: 36 }).map((_, i) => (
-                    <div key={i} style={{ width: "100%", height: 28, background: "rgba(255,255,255,0.09)", borderRadius: 2, marginBottom: 50 }} />
-                  ))}
-                </motion.div>
-              </div>
+          {/* Checkpoint info pop cards */}
+          <div style={{ position: "absolute", inset: 0, zIndex: 20 }}>
+            {EVENTS.slice(0, -1).map((evt, i) => (
+              <Checkpoint key={evt.title} evt={evt} index={i} total={EVENTS.length} scrollYProgress={smooth} />
             ))}
-
-            {/* Checkered finish strip ON the road (appears near far end) */}
-            <motion.div style={{
-              position: "absolute", left: 0, right: 0, top: "12%", height: 22,
-              backgroundImage: "repeating-conic-gradient(#fff 0deg 90deg, #000 90deg 180deg)",
-              backgroundSize: "22px 22px",
-              opacity: useTransform(smooth, [0.75, 0.88], [0, 1]),
-            }} />
           </div>
 
-          {/* Neon LEFT rail */}
-          <div style={{
-            position: "absolute", bottom: 0,
-            left: `calc(50% - clamp(140px, 17vw, 260px))`,
-            width: 3, height: "60%",
-            transformOrigin: "50% bottom",
-            transform: "rotateX(70deg)",
-            background: "linear-gradient(to top, #06b6d4 0%, #8b5cf6 60%, transparent 100%)",
-            boxShadow: "0 0 20px rgba(6,182,212,0.8), 0 0 50px rgba(6,182,212,0.3)",
-            borderRadius: 4,
-          }} />
+          <FinishOverlay scrollYProgress={smooth} />
+        </motion.div>
 
-          {/* Neon RIGHT rail */}
-          <div style={{
-            position: "absolute", bottom: 0,
-            right: `calc(50% - clamp(140px, 17vw, 260px))`,
-            width: 3, height: "60%",
-            transformOrigin: "50% bottom",
-            transform: "rotateX(70deg)",
-            background: "linear-gradient(to top, #8b5cf6 0%, #06b6d4 60%, transparent 100%)",
-            boxShadow: "0 0 20px rgba(139,92,246,0.8), 0 0 50px rgba(139,92,246,0.3)",
-            borderRadius: 4,
-          }} />
+        {/* Speed FX */}
+        <SpeedOverlay speed={renderSpeed} />
+        <CameraShake speed={renderSpeed} />
 
-          {/* Road surface glow */}
-          <div style={{
-            position: "absolute", bottom: 0, left: "50%",
-            width: "clamp(280px, 34vw, 520px)",
-            height: "30vh",
-            transformOrigin: "50% bottom",
-            transform: "translateX(-50%) rotateX(70deg)",
-            background: "linear-gradient(to top, rgba(6,182,212,0.04), transparent)",
-            pointerEvents: "none",
-          }} />
-        </div>
-
-        {/* ── Vignettes ── */}
-        <div style={{ position: "absolute", inset: "0 0 auto 0", height: "48%", background: "linear-gradient(to bottom, #030305 30%, rgba(3,3,5,0.7) 70%, transparent)", pointerEvents: "none", zIndex: 10 }} />
-        <div style={{ position: "absolute", inset: "auto 0 0 0", height: "16%", background: "linear-gradient(to top, #030305, transparent)", pointerEvents: "none", zIndex: 10 }} />
-
-        {/* ── Flag posts at finish ── */}
-        <FlagPost side="left"  scrollYProgress={smooth} />
-        <FlagPost side="right" scrollYProgress={smooth} />
-
-        {/* ── Floating event cards ── */}
-        <div style={{ position: "absolute", inset: 0, zIndex: 20, pointerEvents: "none" }}>
-          {EVENTS.slice(0, -1).map((evt, i) => (
-            <RaceCard key={evt.title} evt={evt} index={i} total={EVENTS.length} scrollYProgress={smooth} />
-          ))}
-        </div>
-
-        {/* ── Finish line + Award card ── */}
-        <FinishLine scrollYProgress={smooth} />
-
-        {/* ── Right-side HUD progress strip ── */}
-        <div style={{ position: "absolute", right: 22, top: "50%", transform: "translateY(-50%)", zIndex: 30, display: "flex", flexDirection: "column", gap: 7, alignItems: "center" }}>
-          {EVENTS.map((evt, i) => (
-            <DotIndicator key={evt.title} index={i} total={EVENTS.length} accent={evt.accent} scrollYProgress={smooth} />
-          ))}
-        </div>
-
-        {/* ── Top date label ── */}
-        <div style={{ position: "absolute", top: 24, left: "50%", transform: "translateX(-50%)", zIndex: 30 }}>
+        {/* HUD: Top center badge */}
+        <div style={{
+          position: "absolute", top: 20, left: "50%",
+          transform: "translateX(-50%)", zIndex: 40, pointerEvents: "none",
+        }}>
           <div style={{
             display: "flex", alignItems: "center", gap: 8,
-            padding: "7px 18px", borderRadius: 100,
-            background: "rgba(6,182,212,0.07)", border: "1px solid rgba(6,182,212,0.2)",
-            fontFamily: "var(--font-display, 'Outfit', system-ui)",
-            fontSize: 10, fontWeight: 900, letterSpacing: "0.2em",
+            padding: "7px 20px", borderRadius: 100,
+            background: "rgba(6,182,212,0.07)",
+            border: "1px solid rgba(6,182,212,0.22)",
+            backdropFilter: "blur(12px)",
+            fontFamily: "var(--font-display,'Outfit',system-ui)",
+            fontSize: 10, fontWeight: 900, letterSpacing: "0.22em",
             textTransform: "uppercase", color: "#22d3ee",
           }}>
-            🏎️ &nbsp;Sep 5, 2026 — Hackathon Day
+            🏎️&nbsp; Sep 5, 2026 · Hackathon Day · PESIAMS
           </div>
         </div>
 
-        {/* ── Bottom hint ── */}
-        <div style={{ position: "absolute", bottom: 28, left: "50%", transform: "translateX(-50%)", zIndex: 30 }}>
+        {/* HUD: Speedometer bottom-left */}
+        <Speedometer speed={renderSpeed} progress={renderProgress} />
+
+        {/* HUD: Minimap top-right */}
+        <MinimapHUD progress={renderProgress} currentIndex={currentIndex} />
+
+        {/* Scroll hint — fades out */}
+        <motion.div style={{
+          position: "absolute", bottom: 24, left: "50%",
+          transform: "translateX(-50%)", zIndex: 40,
+          opacity: scrollHint, pointerEvents: "none",
+        }}>
           <div style={{
             display: "flex", alignItems: "center", gap: 10,
-            padding: "10px 22px", borderRadius: 100,
-            background: "rgba(0,0,0,0.7)", border: "1px solid rgba(255,255,255,0.08)",
-            backdropFilter: "blur(12px)",
+            padding: "10px 24px", borderRadius: 100,
+            background: "rgba(0,0,0,0.75)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            backdropFilter: "blur(16px)",
           }}>
-            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#06b6d4", animation: "ping 1.5s cubic-bezier(0,0,0.2,1) infinite" }} />
+            <motion.div
+              animate={{ y: [0, 4, 0] }}
+              transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+              style={{
+                width: 6, height: 6, borderRadius: "50%",
+                background: "#06b6d4", boxShadow: "0 0 8px rgba(6,182,212,0.9)",
+              }}
+            />
             <span style={{
-              fontFamily: "var(--font-display, 'Outfit', system-ui)",
-              fontSize: 9, fontWeight: 900, letterSpacing: "0.2em",
+              fontFamily: "var(--font-display,'Outfit',system-ui)",
+              fontSize: 9, fontWeight: 900, letterSpacing: "0.22em",
               textTransform: "uppercase", color: "#52525b",
             }}>
-              Scroll to drive · {EVENTS.length} milestones · Finish line ahead
+              Scroll to race · {EVENTS.length} checkpoints · Finish line ahead
             </span>
           </div>
-        </div>
+        </motion.div>
+
+        {/* Active event label — center bottom */}
+        <motion.div style={{
+          position: "absolute", bottom: 100, left: "50%",
+          transform: "translateX(-50%)", zIndex: 40,
+          opacity: checkLabel, pointerEvents: "none",
+        }}>
+          <div style={{
+            textAlign: "center",
+            fontFamily: "var(--font-display,'Outfit',system-ui)",
+            fontSize: 10, fontWeight: 900, letterSpacing: "0.18em",
+            textTransform: "uppercase", color: "rgba(255,255,255,0.18)",
+          }}>
+            {EVENTS[currentIndex]?.time} · {EVENTS[currentIndex]?.title}
+          </div>
+        </motion.div>
+
       </div>
     </div>
   );
