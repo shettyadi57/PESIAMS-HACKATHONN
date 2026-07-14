@@ -15,7 +15,7 @@ interface ContactCard {
 const contacts: ContactCard[] = [
   {
     role: "Faculty Coordinator Support",
-    name: "Mr. Sharath S P",
+    name: "Mr. Sachidananda M H",
     phone: "+91 94814 17793",
     email: "sharathsp@pes.edu",
   },

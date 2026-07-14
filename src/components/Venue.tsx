@@ -33,58 +33,43 @@ export default function Venue() {
 
       <div className="max-w-7xl mx-auto px-6 md:px-12">
 
-        {/* ── College Photo Banner ─────────────────────────────── */}
+        {/* ── Campus Video Banner ─────────────────────────────── */}
         <motion.div
           ref={containerRef}
           initial={{ opacity: 0, y: 24 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="mb-16 relative rounded-3xl overflow-hidden border border-border-glass"
-          style={{ height: "260px" }}
+          className="mb-16 relative rounded-3xl overflow-hidden border border-border-glass w-full"
+          style={{ aspectRatio: "16 / 7" }}
         >
-          {/* Try to load actual college photo — drop college_photo.jpg in /public to activate */}
-          <img
-            src="/college_photo.jpg"
-            alt="PESIAMS Campus — Shivamogga"
-            className="w-full h-full object-cover object-center"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+          {/* PESIAMS Campus Video */}
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ objectPosition: "center 40%" }}
+            src="https://pestrust.edu.in/pesiams/assets/front_end/img/homeBannerVideo.mp4"
           />
 
-          {/* Fallback styled placeholder (shows if no photo file) */}
-          <div
-            className="absolute inset-0 flex flex-col items-center justify-center"
-            style={{
-              background: "linear-gradient(135deg, rgba(139,92,246,0.08) 0%, rgba(6,182,212,0.06) 100%)",
-            }}
-          >
-            {/* Campus silhouette lines */}
-            <svg viewBox="0 0 800 200" className="w-full h-32 opacity-10" preserveAspectRatio="xMidYMid meet">
-              <rect x="60"  y="80"  width="80"  height="120" fill="none" stroke="white" strokeWidth="1.5"/>
-              <rect x="160" y="50"  width="120" height="150" fill="none" stroke="white" strokeWidth="1.5"/>
-              <rect x="300" y="30"  width="200" height="170" fill="none" stroke="white" strokeWidth="2"/>
-              <rect x="520" y="60"  width="100" height="140" fill="none" stroke="white" strokeWidth="1.5"/>
-              <rect x="640" y="90"  width="80"  height="110" fill="none" stroke="white" strokeWidth="1.5"/>
-              <line x1="0" y1="200" x2="800" y2="200" stroke="white" strokeWidth="1" opacity="0.4"/>
-              <polygon points="395,0 340,30 450,30" fill="none" stroke="white" strokeWidth="1.5"/>
-            </svg>
-            <div className="text-center mt-2">
-              <p className="text-zinc-300 font-display font-black text-xl tracking-widest">PESIAMS CAMPUS</p>
-              <p className="text-zinc-500 text-xs tracking-widest mt-1 uppercase">NH 206, Sagar Road, Shivamogga — 577204</p>
-              <p className="text-zinc-700 text-[10px] tracking-wider mt-3 uppercase">
-                📁 Drop <code className="text-accent-cyan">college_photo.jpg</code> in <code className="text-accent-violet">/public</code> to show real campus photo
-              </p>
-            </div>
-          </div>
-
-          {/* Gradient overlays */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/80 via-transparent to-transparent pointer-events-none" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#050505]/40 via-transparent to-[#050505]/40 pointer-events-none" />
+          {/* Subtle cinematic dark overlay — bottom fade only */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/70 via-[#050505]/10 to-transparent pointer-events-none" />
+          {/* Side fade overlays */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#050505]/30 via-transparent to-[#050505]/30 pointer-events-none" />
 
           {/* PESIAMS badge overlay */}
-          <div className="absolute bottom-4 left-6 flex items-center gap-2">
+          <div className="absolute bottom-5 left-6 flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-accent-cyan animate-pulse" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
+            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-300">
               PES Institute of Advanced Management Studies
+            </span>
+          </div>
+
+          {/* Top-right campus label */}
+          <div className="absolute top-5 right-6">
+            <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 px-3 py-1 rounded-full bg-black/40 border border-white/10 backdrop-blur-sm">
+              📍 Shivamogga, Karnataka
             </span>
           </div>
         </motion.div>

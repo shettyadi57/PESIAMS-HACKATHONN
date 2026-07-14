@@ -12,7 +12,7 @@ interface Member {
 }
 
 const principalMember: Member = {
-  name: "Dr. Girish Kumar K",
+  name: "Dr. Sudarshan G M",
   role: "Patron / Principal",
   dept: "PESIAMS, Shivamogga",
   photo: "", // Path to photo (e.g. "/images/principal.jpg")
@@ -29,21 +29,21 @@ const hodMember: Member = {
 
 const facultyLeaders: Member[] = [
   {
-    name: "Mr. Sharath S P",
+    name: "Mr. Sachidananda M H",
     role: "Faculty Coordinator",
     dept: "Dept. of Computer Applications (BCA)",
     photo: "",
     linkedin: "https://linkedin.com",
   },
   {
-    name: "Mrs. Ashwini G",
+    name: "Ms. Asma Noorain",
     role: "Faculty Coordinator",
     dept: "Dept. of Computer Applications (BCA)",
     photo: "",
     linkedin: "https://linkedin.com",
   },
   {
-    name: "Mr. Raghavendra R",
+    name: "Mr. Bhanu Prakash P C",
     role: "Faculty Coordinator",
     dept: "Dept. of Computer Applications (BCA)",
     photo: "",
