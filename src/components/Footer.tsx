@@ -13,7 +13,45 @@ export default function Footer() {
   };
 
   return (
-    <footer className="relative z-20 border-t border-border-glass bg-background py-12 md:py-16">
+    <footer className="relative z-20 border-t border-border-glass bg-background">
+
+      {/* ── Centered College Logo Seal ── */}
+      <div className="relative flex flex-col items-center justify-center pt-12 pb-8">
+        {/* Subtle radial glow behind the logo */}
+        <div className="absolute w-64 h-24 rounded-full bg-accent-cyan/8 blur-[60px] pointer-events-none" />
+
+        {/* Divider lines flanking the logo */}
+        <div className="flex items-center gap-5 w-full max-w-md mb-6">
+          <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/10 to-white/20" />
+          <div className="relative">
+            {/* Glow ring */}
+            <div className="absolute inset-0 rounded-full bg-accent-cyan/15 blur-[10px] scale-110" />
+            {/* Logo image */}
+            <div className="relative w-16 h-16 rounded-full border border-white/15 overflow-hidden bg-zinc-900 shadow-[0_0_24px_rgba(6,182,212,0.18)]">
+              <img
+                src="/colege logo.jpg"
+                alt="PESIAMS College Logo"
+                className="w-full h-full object-contain p-1"
+              />
+            </div>
+          </div>
+          <div className="flex-1 h-px bg-gradient-to-l from-transparent via-white/10 to-white/20" />
+        </div>
+
+        {/* College name beneath logo */}
+        <p className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-500 text-center">
+          PES Institute of Advanced Management Studies
+        </p>
+        <p className="text-[9px] font-semibold uppercase tracking-widest text-zinc-700 mt-1 text-center">
+          Shivamogga, Karnataka — Est. 2001
+        </p>
+      </div>
+
+      {/* Thin separator */}
+      <div className="w-full max-w-7xl mx-auto px-6 md:px-12">
+        <div className="h-px bg-border-glass mb-10" />
+      </div>
+
       <div className="max-w-7xl mx-auto px-6 md:px-12 flex flex-col md:flex-row justify-between items-start gap-12">
         
         {/* Left Column (Branding & Legal) */}
