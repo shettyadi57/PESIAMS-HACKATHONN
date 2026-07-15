@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useRef, useEffect, useCallback } from "react";
 import { motion, useScroll, useTransform, useSpring, useMotionValue, useVelocity } from "framer-motion";
@@ -27,8 +27,9 @@ const C = {
 function getCurveOffset(t: number, p: number) {
   // t is depth: 0 at horizon, 1 at screen
   // Winding track based on scroll position + depth
-  const trackPos = p * 8 + t * 2.8;
-  return (Math.sin(trackPos) * 160 + Math.cos(trackPos * 0.5) * 60) * t * t;
+  const trackPos = p * 7.5 + t * 3.2;
+  // Multiply by t^1.15 so the horizon itself sways naturally instead of staying static
+  return (Math.sin(trackPos) * 180 + Math.cos(trackPos * 0.52) * 70) * Math.pow(t, 1.15);
 }
 
 /* --- Canvas Road Renderer --- */
@@ -86,7 +87,8 @@ function RoadCanvas({ progress, speed }: { progress: number; speed: number }) {
       const t = i / steps;
       const y = vy + (H - vy) * t;
       const curve = getCurveOffset(t, p);
-      const halfW = roadHalfBase * t;
+      // Non-linear power taper + min width to prevent sharp triangle wedge
+      const halfW = roadHalfBase * Math.pow(t, 1.45) + 8;
       ctx.lineTo(vx + curve - halfW, y);
     }
     // Right edge from top to bottom
@@ -94,7 +96,7 @@ function RoadCanvas({ progress, speed }: { progress: number; speed: number }) {
       const t = i / steps;
       const y = vy + (H - vy) * t;
       const curve = getCurveOffset(t, p);
-      const halfW = roadHalfBase * t;
+      const halfW = roadHalfBase * Math.pow(t, 1.45) + 8;
       ctx.lineTo(vx + curve + halfW, y);
     }
     ctx.closePath();
@@ -108,7 +110,7 @@ function RoadCanvas({ progress, speed }: { progress: number; speed: number }) {
       const t = i / steps;
       const y = vy + (H - vy) * t;
       const curve = getCurveOffset(t, p);
-      const halfW = roadHalfBase * t;
+      const halfW = roadHalfBase * Math.pow(t, 1.45) + 8;
       if (i === 0) ctx.moveTo(vx + curve - halfW, y);
       else ctx.lineTo(vx + curve - halfW, y);
     }
@@ -125,7 +127,7 @@ function RoadCanvas({ progress, speed }: { progress: number; speed: number }) {
       const t = i / steps;
       const y = vy + (H - vy) * t;
       const curve = getCurveOffset(t, p);
-      const halfW = roadHalfBase * t;
+      const halfW = roadHalfBase * Math.pow(t, 1.45) + 8;
       if (i === 0) ctx.moveTo(vx + curve + halfW, y);
       else ctx.lineTo(vx + curve + halfW, y);
     }
@@ -143,7 +145,7 @@ function RoadCanvas({ progress, speed }: { progress: number; speed: number }) {
       if (t > 1) continue;
       const y = vy + (H - vy) * t;
       const curve = getCurveOffset(t, p);
-      const xSpan = roadHalfBase * t;
+      const xSpan = roadHalfBase * Math.pow(t, 1.45) + 8;
       const alpha = Math.min(t * 1.5, 0.6);
 
       ctx.beginPath();
@@ -185,7 +187,7 @@ function RoadCanvas({ progress, speed }: { progress: number; speed: number }) {
         if (depth > 0.02 && depth < 0.98) {
           const y = vy + (H - vy) * depth;
           const curve = getCurveOffset(depth, p);
-          const rW = roadHalfBase * depth;
+          const rW = roadHalfBase * Math.pow(depth, 1.45) + 8;
           
           // Gate dimensions
           const gateW = rW * 1.15;

@@ -16,7 +16,6 @@ import FAQ from "@/components/FAQ";
 import Venue from "@/components/Venue";
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
-import CustomCursor from "@/components/CustomCursor";
 import BackgroundSystem from "@/components/BackgroundSystem";
 import CinematicIntro from "@/components/CinematicIntro";
 
@@ -54,9 +53,6 @@ export default function Home() {
       {/* Main Page Content */}
       {!showIntro && (
         <div className="relative min-h-screen text-white selection:bg-accent-cyan selection:text-black">
-          {/* Custom Difference blend Cursor */}
-          <CustomCursor />
-
           {/* Premium Background System */}
           <BackgroundSystem />
 

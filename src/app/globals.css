@@ -72,10 +72,13 @@ body {
   transition: background-color 0.5s ease, color 0.5s ease;
 }
 
-/* Hide cursor on desktop for custom cursor */
+/* Hide cursor on desktop for custom cursor, but keep it for inputs, textareas, and select elements */
 @media (hover: hover) and (pointer: fine) {
-  * {
-    cursor: none !important;
+  *:not(input):not(textarea):not(select):not(option) {
+    cursor: none;
+  }
+  input, textarea, select {
+    cursor: auto !important;
   }
 }
 

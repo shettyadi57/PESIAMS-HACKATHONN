@@ -46,9 +46,21 @@ export default function CustomCursor() {
 
     // Track mouse positioning and hover state
     const handleMouseMove = (e: MouseEvent) => {
+      const targetEl = e.target as HTMLElement | null;
+      const isInput = targetEl ? (
+        targetEl.tagName === "INPUT" || 
+        targetEl.tagName === "TEXTAREA" || 
+        targetEl.tagName === "SELECT" ||
+        targetEl.closest("input, textarea, select")
+      ) : false;
+
+      if (isInput) {
+        setIsVisible(false);
+        return;
+      }
+
       if (!isVisible) setIsVisible(true);
 
-      const targetEl = e.target as HTMLElement | null;
       const clickableParent = targetEl ? targetEl.closest(".clickable, button, a") as HTMLElement | null : null;
 
       if (clickableParent) {

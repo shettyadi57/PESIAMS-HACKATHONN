@@ -1,0 +1,44 @@
+{
+  "registrations": [
+    {
+      "registrationId": "UTK-HZFSTG",
+      "paidAt": "2026-07-14T18:01:25.384Z",
+      "paymentMode": "DEMO",
+      "orderId": "order_SIM_1784052082563_4N73ZR",
+      "paymentId": "pay_DEMO_1784052085385",
+      "amount": 1000,
+      "teamName": "DND",
+      "domain": "AI / Machine Learning",
+      "ideaTitle": "AI ",
+      "ideaSummary": "i LOVE xsxjsxsjxsxhshjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj",
+      "leader": {
+        "name": "Adithya s shetty ",
+        "usn": "U06PE24S0208",
+        "email": "shettyadithyas57@gmail.com",
+        "phone": "8088716254",
+        "year": "3rd Year"
+      },
+      "members": [
+        {
+          "name": "Chethan s shetty",
+          "usn": "U06PE22",
+          "email": "SHETTYCHETHANS57@GMAIL.COM",
+          "phone": "8088716254",
+          "year": "2nd Year"
+        },
+        {
+          "name": "SSXSS555",
+          "usn": "88888888888",
+          "email": "SSXSXSXSXS",
+          "phone": "XSSXSS",
+          "year": "3rd Year"
+        }
+      ],
+      "college": "PESIAMS",
+      "city": "SHIMOGA",
+      "state": "KARNATAKA",
+      "agreed": true
+    }
+  ],
+  "count": 1
+}

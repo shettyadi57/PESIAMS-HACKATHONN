@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Zap } from "lucide-react";
+import Link from "next/link";
 import { PesiamsLogo, UtkarshLogo } from "./BrandLogo";
 
 export default function Navbar() {
@@ -121,27 +122,27 @@ export default function Navbar() {
 
             <div className="h-4 w-[1px] bg-white/10" />
 
-            {/* Official Social Links (No Register Button) */}
-            <div className="flex items-center gap-4.5">
-              <a
-                href="https://www.instagram.com/pesiams_official/"
-                target="_blank"
-                rel="noreferrer"
-                className="text-zinc-400 hover:text-white transition-colors clickable"
-                title="PESIAMS Official Instagram"
-              >
-                <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+            {/* Social Links */}
+            <div className="flex items-center gap-4">
+              <a href="https://www.instagram.com/pesiams_official/" target="_blank" rel="noreferrer"
+                className="text-zinc-400 hover:text-white transition-colors clickable" title="PESIAMS Official Instagram">
+                <svg className="w-[17px] h-[17px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
               </a>
-              <a
-                href="https://www.linkedin.com/school/pes-institute-of-advanced-management-studies/"
-                target="_blank"
-                rel="noreferrer"
-                className="text-zinc-400 hover:text-white transition-colors clickable"
-                title="PESIAMS Shivamogga LinkedIn"
-              >
-                <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+              <a href="https://www.linkedin.com/school/pes-institute-of-advanced-management-studies/" target="_blank" rel="noreferrer"
+                className="text-zinc-400 hover:text-white transition-colors clickable" title="PESIAMS Shivamogga LinkedIn">
+                <svg className="w-[17px] h-[17px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
               </a>
             </div>
+
+            <div className="h-4 w-[1px] bg-white/10" />
+
+            {/* Register CTA */}
+            <Link href="/register"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-white text-[12px] font-black tracking-wide transition-all hover:opacity-90 active:scale-95 clickable"
+              style={{ background:"linear-gradient(135deg,#8b5cf6 0%,#06b6d4 100%)", boxShadow:"0 0 18px rgba(139,92,246,0.45)" }}>
+              <Zap size={12} className="shrink-0"/>
+              Register — ₹1,000
+            </Link>
           </nav>
 
           {/* Mobile Menu Button */}
@@ -191,22 +192,19 @@ export default function Navbar() {
               </nav>
             </div>
 
-            <div className="px-8 border-t border-white/10 pt-6 flex flex-col gap-5">
+            <div className="px-8 border-t border-white/10 pt-6 flex flex-col gap-4">
+              {/* Mobile Register CTA */}
+              <Link href="/register" onClick={()=>setMobileMenuOpen(false)}
+                className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl text-white text-sm font-black tracking-wide transition-all active:scale-95"
+                style={{ background:"linear-gradient(135deg,#8b5cf6 0%,#06b6d4 100%)", boxShadow:"0 0 25px rgba(139,92,246,0.4)" }}>
+                <Zap size={15}/>
+                Register Now — ₹1,000
+              </Link>
               <div className="flex items-center gap-5 justify-center">
-                <a
-                  href="https://www.instagram.com/pesiams_official/"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-zinc-400 hover:text-white"
-                >
+                <a href="https://www.instagram.com/pesiams_official/" target="_blank" rel="noreferrer" className="text-zinc-400 hover:text-white">
                   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
                 </a>
-                <a
-                  href="https://www.linkedin.com/school/pes-institute-of-advanced-management-studies/"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-zinc-400 hover:text-white"
-                >
+                <a href="https://www.linkedin.com/school/pes-institute-of-advanced-management-studies/" target="_blank" rel="noreferrer" className="text-zinc-400 hover:text-white">
                   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
                 </a>
               </div>

@@ -8,6 +8,17 @@ export default function About() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
+  const [coords, setCoords] = React.useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = React.useState(false);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLHeadingElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setCoords({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+  };
+
   const cards = [
     {
       num: "01",
@@ -53,7 +64,17 @@ export default function About() {
               initial={{ opacity: 0, y: 15 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="font-display font-black text-4xl md:text-5xl tracking-tight text-slate-900 mb-6 leading-tight"
+              onMouseMove={handleMouseMove}
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+              className="font-display font-black text-4xl md:text-5xl tracking-tight mb-6 leading-tight select-none transition-all duration-300"
+              style={{
+                background: isHovered
+                  ? `radial-gradient(circle 200px at ${coords.x}px ${coords.y}px, #044085 0%, #06b6d4 50%, #0f172a 90%)`
+                  : "linear-gradient(to bottom, #0f172a 0%, #1e293b 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
             >
               Unleash Your Software Vision
             </motion.h2>

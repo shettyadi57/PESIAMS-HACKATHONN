@@ -90,6 +90,17 @@ export default function Hero({ onExploreClick }: HeroProps) {
     if (el) el.scrollIntoView({ behavior: "smooth" });
   };
 
+  const [coords, setCoords] = React.useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = React.useState(false);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLHeadingElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setCoords({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+  };
+
   return (
     <section
       id="hero"
@@ -222,9 +233,20 @@ export default function Hero({ onExploreClick }: HeroProps) {
           {/* Main Title */}
           <motion.h1
             variants={itemVariants}
-            className="font-display font-black text-6xl sm:text-7xl md:text-[8rem] tracking-tight leading-none mb-6 select-none bg-clip-text text-transparent bg-gradient-to-b from-white via-zinc-100 to-zinc-400 drop-shadow-[0_0_35px_rgba(6,182,212,0.25)]"
+            onMouseMove={handleMouseMove}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            className="font-display font-black text-6xl sm:text-7xl md:text-[8rem] tracking-tight leading-none mb-6 select-none transition-all duration-300 drop-shadow-[0_0_35px_rgba(6,182,212,0.25)]"
+            style={{
+              background: isHovered
+                ? `radial-gradient(circle 240px at ${coords.x}px ${coords.y}px, #06b6d4 0%, #8b5cf6 45%, #ffffff 90%)`
+                : "linear-gradient(to bottom, #ffffff 0%, #f4f4f5 50%, #a1a1aa 100%)",
+              WebkitBackgroundClip: "text",
+              backgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}
           >
-            UTKARSH <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-cyan to-accent-violet">1.0</span>
+            UTKARSH 1.0
           </motion.h1>
 
           {/* Tagline */}
@@ -257,14 +279,11 @@ export default function Hero({ onExploreClick }: HeroProps) {
             </span>
           </motion.div>
 
-          {/* Single Explorer CTA (No Register CTA until open) */}
-          <motion.div
-            variants={itemVariants}
-            className="w-full sm:w-auto"
-          >
+          {/* CTA */}
+          <motion.div variants={itemVariants} className="w-full sm:w-auto">
             <button
               onClick={scrollToAbout}
-              className="w-full sm:w-auto px-10 py-4 rounded-full bg-white text-black hover:bg-zinc-200 text-sm font-bold transition-all shadow-[0_4px_20px_rgba(255,255,255,0.25)] active:scale-95 flex items-center justify-center gap-2.5 mx-auto clickable"
+              className="w-full sm:w-auto px-10 py-4 rounded-full bg-white text-black hover:bg-zinc-200 text-sm font-bold transition-all shadow-[0_4px_20px_rgba(255,255,255,0.22)] active:scale-95 flex items-center justify-center gap-2.5 mx-auto clickable"
             >
               Explore Event
               <ArrowRight size={14} className="animate-pulse" />
