@@ -6,7 +6,6 @@ export default function CustomCursor() {
   const [isVisible, setIsVisible] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isClicked, setIsClicked] = useState(false);
-  const [isMobile, setIsMobile] = useState(true);
 
   // References for DOM nodes to bypass React re-renders
   const ringRef = useRef<HTMLDivElement>(null);
@@ -32,20 +31,17 @@ export default function CustomCursor() {
   const glowSize = useRef(350);
   const glowIntensity = useRef(1.0);
 
+  // Track the last input pointer type and scroll position for mobile inertia
+  const lastPointerType = useRef<"mouse" | "touch">("mouse");
+  const lastScrollY = useRef(0);
+
   useEffect(() => {
-    // Media match for coarse pointers (touchscreens/mobile)
-    const checkDevice = () => {
-      const isTouch = window.matchMedia("(pointer: coarse)").matches;
-      setIsMobile(isTouch);
-    };
-
-    checkDevice();
-    window.addEventListener("resize", checkDevice);
-
-    if (isMobile) return;
+    lastScrollY.current = window.scrollY;
 
     // Track mouse positioning and hover state
     const handleMouseMove = (e: MouseEvent) => {
+      lastPointerType.current = "mouse";
+      
       const targetEl = e.target as HTMLElement | null;
       const isInput = targetEl ? (
         targetEl.tagName === "INPUT" || 
@@ -96,16 +92,90 @@ export default function CustomCursor() {
       }
     };
 
-    const handleMouseDown = () => setIsClicked(true);
-    const handleMouseUp = () => setIsClicked(false);
+    const handleMouseDown = () => {
+      lastPointerType.current = "mouse";
+      setIsClicked(true);
+    };
+    
+    const handleMouseUp = () => {
+      lastPointerType.current = "mouse";
+      setIsClicked(false);
+    };
+    
     const handleMouseLeave = () => setIsVisible(false);
     const handleMouseEnter = () => setIsVisible(true);
+
+    // Touch event handlers for mobile devices
+    const handleTouchStart = (e: TouchEvent) => {
+      lastPointerType.current = "touch";
+      if (e.touches.length > 0) {
+        const touch = e.touches[0];
+        target.current.x = touch.clientX;
+        target.current.y = touch.clientY;
+
+        // Snap coordinates instantly to touchstart point to prevent long sliding transitions from old positions
+        vx.current = touch.clientX;
+        vy.current = touch.clientY;
+        vxb.current = touch.clientX;
+        vyb.current = touch.clientY;
+        vxc.current = touch.clientX;
+        vyc.current = touch.clientY;
+        ringX.current = touch.clientX;
+        ringY.current = touch.clientY;
+        dotX.current = touch.clientX;
+        dotY.current = touch.clientY;
+
+        lastTarget.current.x = touch.clientX;
+        lastTarget.current.y = touch.clientY;
+
+        setIsVisible(true);
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      lastPointerType.current = "touch";
+      if (e.touches.length > 0) {
+        if (!isVisible) setIsVisible(true);
+        const touch = e.touches[0];
+        target.current.x = touch.clientX;
+        target.current.y = touch.clientY;
+      }
+    };
+
+    const handleTouchEnd = () => {
+      lastPointerType.current = "touch";
+      setIsVisible(false);
+      setIsClicked(false);
+    };
+
+    // Scroll event handler to dynamically shift cursor coordinates
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const deltaY = currentScrollY - lastScrollY.current;
+      lastScrollY.current = currentScrollY;
+
+      // Scroll delta is only tracked for mobile touch devices so the glow travels with the page
+      if (lastPointerType.current === "touch") {
+        target.current.y -= deltaY;
+
+        // Keep target coordinate within viewport boundary margins
+        const margin = window.innerHeight * 1.2;
+        target.current.y = Math.max(-margin, Math.min(window.innerHeight + margin, target.current.y));
+      }
+    };
 
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mousedown", handleMouseDown);
     window.addEventListener("mouseup", handleMouseUp);
     document.addEventListener("mouseleave", handleMouseLeave);
     document.addEventListener("mouseenter", handleMouseEnter);
+
+    // Register mobile touch and scroll listeners
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd, { passive: true });
+    window.addEventListener("touchcancel", handleTouchEnd, { passive: true });
+    window.addEventListener("scroll", handleScroll, { passive: true });
 
     // Highly performant 60 FPS RequestAnimationFrame Loop
     let animationFrameId: number;
@@ -130,7 +200,7 @@ export default function CustomCursor() {
       dotX.current += (target.current.x - dotX.current) * 0.28;
       dotY.current += (target.current.y - dotY.current) * 0.28;
 
-      // Velocity calculation (speed of mouse movement)
+      // Velocity calculation (speed of movement)
       const dx = target.current.x - lastTarget.current.x;
       const dy = target.current.y - lastTarget.current.y;
       const speed = Math.sqrt(dx * dx + dy * dy);
@@ -186,17 +256,21 @@ export default function CustomCursor() {
     animationFrameId = requestAnimationFrame(animateLoop);
 
     return () => {
-      window.removeEventListener("resize", checkDevice);
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mousedown", handleMouseDown);
       window.removeEventListener("mouseup", handleMouseUp);
       document.removeEventListener("mouseleave", handleMouseLeave);
       document.removeEventListener("mouseenter", handleMouseEnter);
+
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
+      window.removeEventListener("touchcancel", handleTouchEnd);
+      window.removeEventListener("scroll", handleScroll);
+
       cancelAnimationFrame(animationFrameId);
     };
-  }, [isMobile, isVisible, isHovered, isClicked]);
-
-  if (isMobile) return null;
+  }, [isVisible, isHovered, isClicked]);
 
   return (
     <>

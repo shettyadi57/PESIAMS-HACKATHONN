@@ -238,7 +238,7 @@ export default function Hero({ onExploreClick }: HeroProps) {
             onMouseLeave={() => setIsHovered(false)}
             className="font-display font-black text-6xl sm:text-7xl md:text-[8rem] tracking-tight leading-none mb-6 select-none transition-all duration-300 drop-shadow-[0_0_35px_rgba(6,182,212,0.25)]"
             style={{
-              background: isHovered
+              backgroundImage: isHovered
                 ? `radial-gradient(circle 240px at ${coords.x}px ${coords.y}px, #06b6d4 0%, #8b5cf6 45%, #ffffff 90%)`
                 : "linear-gradient(to bottom, #ffffff 0%, #f4f4f5 50%, #a1a1aa 100%)",
               WebkitBackgroundClip: "text",
