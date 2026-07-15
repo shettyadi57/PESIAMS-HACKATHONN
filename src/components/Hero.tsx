@@ -126,7 +126,7 @@ export default function Hero({ onExploreClick }: HeroProps) {
           loop
           muted
           playsInline
-          className="hidden md:block absolute inset-0 w-full h-full pointer-events-none select-none"
+          className="absolute inset-0 w-full h-full pointer-events-none select-none"
           style={{
             objectFit: "cover",
             objectPosition: "center center",
