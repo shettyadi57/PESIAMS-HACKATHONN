@@ -46,7 +46,6 @@ export default function BackgroundSystem() {
               transparent 100%
             )
           `,
-          filter: "blur(20px)",
         }}
       />
     </div>

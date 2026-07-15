@@ -124,7 +124,7 @@ function EventRow({ evt, index, isLast }: { evt: Evt; index: number; isLast: boo
 
 // ─── Main Section ─────────────────────────────────────────────────────────────
 export default function Schedule() {
-  const [mode, setMode] = useState<"classic" | "race">("race");
+  const [mode, setMode] = useState<"classic" | "race">("classic");
   const headerRef = useRef<HTMLDivElement>(null);
   const headerVis = useInView(headerRef, { once: true, margin: "-80px" });
 

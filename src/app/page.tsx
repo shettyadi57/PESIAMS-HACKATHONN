@@ -74,7 +74,6 @@ export default function Home() {
                   transparent 100%
                 )
               `,
-              filter: "blur(8px)"
             }}
           />
 

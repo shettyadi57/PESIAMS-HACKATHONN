@@ -126,14 +126,12 @@ export default function Hero({ onExploreClick }: HeroProps) {
           loop
           muted
           playsInline
-          className="absolute inset-0 w-full h-full pointer-events-none select-none"
+          className="hidden md:block absolute inset-0 w-full h-full pointer-events-none select-none"
           style={{
             objectFit: "cover",
             objectPosition: "center center",
             mixBlendMode: "screen",
             opacity: 0.90,
-            filter:
-              "brightness(1.2) saturate(1.45) contrast(1.05)",
             willChange: "transform",
             transform: "translateZ(0)", // force GPU layer — smooth on mobile
           }}

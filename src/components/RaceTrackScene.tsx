@@ -33,7 +33,7 @@ function getCurveOffset(t: number, p: number) {
 }
 
 /* --- Canvas Road Renderer --- */
-function RoadCanvas({ progress, speed }: { progress: number; speed: number }) {
+function RoadCanvas({ progress, speed, isMobileSize }: { progress: number; speed: number; isMobileSize: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef   = useRef<number>(0);
   const stateRef  = useRef({ progress, speed });
@@ -73,7 +73,7 @@ function RoadCanvas({ progress, speed }: { progress: number; speed: number }) {
     const vy = H * 0.42;
 
     const roadHalfBase = W * 0.46;
-    const steps = 60;
+    const steps = isMobileSize ? 30 : 60;
 
     // --- Draw Road Plane with Curve ---
     const road = ctx.createLinearGradient(0, vy, 0, H);
@@ -116,8 +116,10 @@ function RoadCanvas({ progress, speed }: { progress: number; speed: number }) {
     }
     ctx.lineWidth = 3 + spd * 2;
     ctx.strokeStyle = "rgba(6,182,212,0.9)";
-    ctx.shadowColor = "#06b6d4";
-    ctx.shadowBlur = 15 + spd * 25;
+    if (!isMobileSize) {
+      ctx.shadowColor = "#06b6d4";
+      ctx.shadowBlur = 15 + spd * 25;
+    }
     ctx.stroke();
     ctx.shadowBlur = 0;
 
@@ -133,8 +135,10 @@ function RoadCanvas({ progress, speed }: { progress: number; speed: number }) {
     }
     ctx.lineWidth = 3 + spd * 2;
     ctx.strokeStyle = "rgba(139,92,246,0.9)";
-    ctx.shadowColor = "#8b5cf6";
-    ctx.shadowBlur = 15 + spd * 25;
+    if (!isMobileSize) {
+      ctx.shadowColor = "#8b5cf6";
+      ctx.shadowBlur = 15 + spd * 25;
+    }
     ctx.stroke();
     ctx.shadowBlur = 0;
 
@@ -203,8 +207,10 @@ function RoadCanvas({ progress, speed }: { progress: number; speed: number }) {
           
           ctx.lineWidth = 2.5 + depth * 5;
           ctx.strokeStyle = col.hex;
-          ctx.shadowColor = col.hex;
-          ctx.shadowBlur = 10 + depth * 25;
+          if (!isMobileSize) {
+            ctx.shadowColor = col.hex;
+            ctx.shadowBlur = 10 + depth * 25;
+          }
           ctx.stroke();
           ctx.shadowBlur = 0;
 
@@ -228,7 +234,10 @@ function RoadCanvas({ progress, speed }: { progress: number; speed: number }) {
 
     // --- Speed lines (F1 feeling) ---
     if (spd > 0.08) {
-      const lineCount = Math.floor(spd * 80);
+      const lineCount = isMobileSize ? Math.floor(spd * 20) : Math.floor(spd * 80);
+      ctx.lineWidth = 0.8;
+      ctx.strokeStyle = `rgba(200, 200, 255, ${0.12 * spd})`;
+      
       for (let i = 0; i < lineCount; i++) {
         const angle = Math.random() * Math.PI * 2;
         const startR = 20 + Math.random() * 80;
@@ -237,21 +246,15 @@ function RoadCanvas({ progress, speed }: { progress: number; speed: number }) {
         const sy = vy * 0.9 + Math.sin(angle) * startR * 0.4;
         const ex = vx + Math.cos(angle) * (startR + len);
         const ey = vy * 0.9 + Math.sin(angle) * (startR + len) * 0.4;
-        const grad = ctx.createLinearGradient(sx, sy, ex, ey);
-        grad.addColorStop(0, "rgba(255,255,255,0.0)");
-        grad.addColorStop(0.3, `rgba(200,200,255,${0.18 * spd})`);
-        grad.addColorStop(1, "rgba(255,255,255,0.0)");
         ctx.beginPath();
         ctx.moveTo(sx, sy);
         ctx.lineTo(ex, ey);
-        ctx.lineWidth = 0.8;
-        ctx.strokeStyle = grad;
         ctx.stroke();
       }
     }
 
     // Stars
-    const STAR_COUNT = 85;
+    const STAR_COUNT = isMobileSize ? 30 : 85;
     for (let i = 0; i < STAR_COUNT; i++) {
       const sx2 = ((i * 7919 + 1234) % 10000) / 10000 * W;
       const sy2 = ((i * 6271 + 4567) % 10000) / 10000 * H * 0.44;
@@ -264,7 +267,7 @@ function RoadCanvas({ progress, speed }: { progress: number; speed: number }) {
     }
 
     animRef.current = requestAnimationFrame(draw);
-  }, []);
+  }, [isMobileSize]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -287,8 +290,8 @@ function RoadCanvas({ progress, speed }: { progress: number; speed: number }) {
 }
 
 /* --- Checkpoint Info Pop Card --- */
-function Checkpoint({ evt, index, total, scrollYProgress }: {
-  evt: Evt; index: number; total: number; scrollYProgress: ReturnType<typeof useSpring>;
+function Checkpoint({ evt, index, total, scrollYProgress, isMobileSize }: {
+  evt: Evt; index: number; total: number; scrollYProgress: ReturnType<typeof useSpring>; isMobileSize: boolean;
 }) {
   const col    = C[evt.accent];
   const isLeft = index % 2 === 0;
@@ -310,7 +313,9 @@ function Checkpoint({ evt, index, total, scrollYProgress }: {
 
   const x = useTransform(scrollYProgress,
     [center - hw * 1.3, center - hw * 0.4, center, center + hw * 0.4, center + hw * 1.1],
-    isLeft ? [-360, -290, -280, -295, -370] : [360, 290, 280, 295, 370]
+    isMobileSize 
+      ? [-135, -135, -135, -135, -135]
+      : (isLeft ? [-360, -290, -280, -295, -370] : [360, 290, 280, 295, 370])
   );
 
   const scale = useTransform(scrollYProgress,
@@ -321,14 +326,14 @@ function Checkpoint({ evt, index, total, scrollYProgress }: {
   // Rotation creates an offset banking perspective look
   const rotateY = useTransform(scrollYProgress,
     [center - hw * 1.3, center, center + hw * 1.1],
-    isLeft ? [22, 5, -12] : [-22, -5, 12]
+    isMobileSize ? [0, 0, 0] : (isLeft ? [22, 5, -12] : [-22, -5, 12])
   );
 
   return (
     <motion.div style={{
       position: "absolute",
       left: "50%",
-      top: "40%",
+      top: isMobileSize ? "20%" : "40%",
       opacity, y, x, scale, rotateY,
       pointerEvents: "none",
       transformStyle: "preserve-3d",
@@ -336,14 +341,15 @@ function Checkpoint({ evt, index, total, scrollYProgress }: {
     }}>
       {/* 3D Glass Card Pop Layout */}
       <div style={{
-        width: 300,
+        width: isMobileSize ? 270 : 300,
         background: "linear-gradient(135deg, rgba(8, 7, 16, 0.94) 0%, rgba(18, 14, 32, 0.92) 100%)",
         border: `1px solid ${col.border}`,
-        borderLeft: isLeft ? `4px solid ${col.hex}` : `1px solid ${col.border}`,
-        borderRight: !isLeft ? `4px solid ${col.hex}` : `1px solid ${col.border}`,
+        borderLeft: isLeft && !isMobileSize ? `4px solid ${col.hex}` : `1px solid ${col.border}`,
+        borderRight: !isLeft && !isMobileSize ? `4px solid ${col.hex}` : `1px solid ${col.border}`,
+        borderTop: isMobileSize ? `3px solid ${col.hex}` : `1px solid ${col.border}`,
         borderRadius: 20,
         padding: "20px 22px",
-        backdropFilter: "blur(28px)",
+        backdropFilter: isMobileSize ? "none" : "blur(28px)",
         boxShadow: `
           0 0 0 1px rgba(255,255,255,0.05) inset,
           0 15px 50px rgba(0,0,0,0.9),
@@ -394,14 +400,16 @@ function Checkpoint({ evt, index, total, scrollYProgress }: {
 }
 
 /* --- HUD Speedometer --- */
-function Speedometer({ speed, progress }: { speed: number; progress: number }) {
+function Speedometer({ speed, progress, isMobileSize }: { speed: number; progress: number; isMobileSize: boolean }) {
   const kmh  = Math.round(progress * 280 + speed * 120);
   const gear = speed > 0.6 ? "6" : speed > 0.4 ? "5" : speed > 0.25 ? "4" : speed > 0.12 ? "3" : speed > 0.04 ? "2" : "1";
 
   return (
     <div style={{
-      position: "absolute", bottom: 24, left: 24, zIndex: 40,
-      display: "flex", alignItems: "flex-end", gap: 14, pointerEvents: "none",
+      position: "absolute", bottom: isMobileSize ? 12 : 24, left: isMobileSize ? 12 : 24, zIndex: 40,
+      display: "flex", alignItems: "flex-end", gap: isMobileSize ? 8 : 14, pointerEvents: "none",
+      transform: isMobileSize ? "scale(0.8)" : "none",
+      transformOrigin: "bottom left",
     }}>
       {/* RPM Tachometer */}
       <div style={{ display: "flex", flexDirection: "column", gap: 3, alignItems: "center" }}>
@@ -472,12 +480,14 @@ function Speedometer({ speed, progress }: { speed: number; progress: number }) {
 }
 
 /* --- Minimap / Progress HUD --- */
-function MinimapHUD({ progress, currentIndex }: { progress: number; currentIndex: number }) {
+function MinimapHUD({ progress, currentIndex, isMobileSize }: { progress: number; currentIndex: number; isMobileSize: boolean }) {
   return (
     <div style={{
-      position: "absolute", top: 24, right: 24, zIndex: 40,
+      position: "absolute", top: isMobileSize ? 12 : 24, right: isMobileSize ? 12 : 24, zIndex: 40,
       pointerEvents: "none", display: "flex", flexDirection: "column",
-      gap: 6, alignItems: "flex-end",
+      gap: isMobileSize ? 4 : 6, alignItems: "flex-end",
+      transform: isMobileSize ? "scale(0.8)" : "none",
+      transformOrigin: "top right",
     }}>
       <div style={{
         background: "rgba(0,0,0,0.65)", border: "1px solid rgba(255,255,255,0.08)",
@@ -486,7 +496,7 @@ function MinimapHUD({ progress, currentIndex }: { progress: number; currentIndex
       }}>
         <span style={{
           fontFamily: "var(--font-display,'Outfit',system-ui)",
-          fontSize: 9, fontWeight: 900, letterSpacing: "0.2em",
+          fontSize: 9, fontWeight: 900, letterSpacing: "0.22em",
           color: "rgba(255,255,255,0.28)", textTransform: "uppercase",
         }}>GATE</span>
         <span style={{
@@ -520,7 +530,7 @@ function MinimapHUD({ progress, currentIndex }: { progress: number; currentIndex
 }
 
 /* --- Finish Overlay --- */
-function FinishOverlay({ scrollYProgress }: { scrollYProgress: ReturnType<typeof useSpring> }) {
+function FinishOverlay({ scrollYProgress, isMobileSize }: { scrollYProgress: ReturnType<typeof useSpring>; isMobileSize: boolean }) {
   const opacity = useTransform(scrollYProgress, [0.84, 0.94, 1], [0, 1, 1]);
   const scale   = useTransform(scrollYProgress, [0.84, 0.94], [0.3, 1]);
   const y       = useTransform(scrollYProgress, [0.84, 0.94], [60, 0]);
@@ -531,7 +541,7 @@ function FinishOverlay({ scrollYProgress }: { scrollYProgress: ReturnType<typeof
       position: "absolute", left: "50%", top: "36%",
       transform: "translateX(-50%)",
       opacity, scale, y, zIndex: 30, pointerEvents: "none",
-      width: "clamp(340px, 46vw, 640px)",
+      width: isMobileSize ? "90%" : "clamp(340px, 46vw, 640px)",
     }}>
       <div style={{ textAlign: "center", marginBottom: 14 }}>
         <span style={{
@@ -556,7 +566,8 @@ function FinishOverlay({ scrollYProgress }: { scrollYProgress: ReturnType<typeof
         <div style={{
           background: "linear-gradient(135deg, rgba(6,6,16,0.98) 0%, rgba(14,10,30,0.96) 100%)",
           border: "1px solid rgba(6,182,212,0.4)", borderTop: "3px solid #06b6d4",
-          borderRadius: 20, padding: "22px 28px", backdropFilter: "blur(28px)",
+          borderRadius: 20, padding: isMobileSize ? "18px 20px" : "22px 28px", 
+          backdropFilter: isMobileSize ? "none" : "blur(28px)",
           boxShadow: "0 0 80px rgba(6,182,212,0.12), 0 24px 80px rgba(0,0,0,0.9)",
           textAlign: "center",
         }}>
@@ -587,8 +598,8 @@ function FinishOverlay({ scrollYProgress }: { scrollYProgress: ReturnType<typeof
 }
 
 /* --- Speed / Vignette Overlay --- */
-function SpeedOverlay({ speed }: { speed: number }) {
-  const blur   = Math.min(speed * 10, 7);
+function SpeedOverlay({ speed, isMobileSize }: { speed: number; isMobileSize: boolean }) {
+  const blur   = isMobileSize ? 0 : Math.min(speed * 10, 7);
   const vigInt = Math.min(speed * 0.9, 0.7);
   return (
     <>
@@ -653,6 +664,15 @@ export default function RaceTrackScene() {
   const [renderSpeed,    setRenderSpeed]    = React.useState(0);
   const [currentIndex,   setCurrentIndex]   = React.useState(0);
 
+  const [isMobileSize, setIsMobileSize] = React.useState(false);
+
+  React.useEffect(() => {
+    const handleResize = () => setIsMobileSize(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   useEffect(() => {
     const unsubP = smooth.on("change", (v) => {
       setRenderProgress(v);
@@ -685,51 +705,65 @@ export default function RaceTrackScene() {
           rotateZ: totalTilt,
           transformPerspective: 1200,
         }}>
-          <RoadCanvas progress={renderProgress} speed={renderSpeed} />
+          <RoadCanvas progress={renderProgress} speed={renderSpeed} isMobileSize={isMobileSize} />
 
           {/* Checkpoint info pop cards */}
           <div style={{ position: "absolute", inset: 0, zIndex: 20 }}>
             {EVENTS.slice(0, -1).map((evt, i) => (
-              <Checkpoint key={evt.title} evt={evt} index={i} total={EVENTS.length} scrollYProgress={smooth} />
+              <Checkpoint 
+                key={evt.title} 
+                evt={evt} 
+                index={i} 
+                total={EVENTS.length} 
+                scrollYProgress={smooth} 
+                isMobileSize={isMobileSize} 
+              />
             ))}
           </div>
 
-          <FinishOverlay scrollYProgress={smooth} />
+          <FinishOverlay scrollYProgress={smooth} isMobileSize={isMobileSize} />
         </motion.div>
 
         {/* Speed FX */}
-        <SpeedOverlay speed={renderSpeed} />
+        <SpeedOverlay speed={renderSpeed} isMobileSize={isMobileSize} />
         <CameraShake speed={renderSpeed} />
 
         {/* HUD: Top center badge */}
         <div style={{
-          position: "absolute", top: 20, left: "50%",
-          transform: "translateX(-50%)", zIndex: 40, pointerEvents: "none",
+          position: "absolute", top: isMobileSize ? 12 : 20, left: "50%",
+          transform: isMobileSize ? "translateX(-50%) scale(0.8)" : "translateX(-50%)",
+          transformOrigin: "top center",
+          zIndex: 40, pointerEvents: "none",
+          width: isMobileSize ? "90%" : "auto",
+          display: "flex", justifyContent: "center"
         }}>
           <div style={{
             display: "flex", alignItems: "center", gap: 8,
-            padding: "7px 20px", borderRadius: 100,
+            padding: isMobileSize ? "5px 12px" : "7px 20px", borderRadius: 100,
             background: "rgba(6,182,212,0.07)",
             border: "1px solid rgba(6,182,212,0.22)",
             backdropFilter: "blur(12px)",
             fontFamily: "var(--font-display,'Outfit',system-ui)",
-            fontSize: 10, fontWeight: 900, letterSpacing: "0.22em",
+            fontSize: 9, fontWeight: 900, letterSpacing: "0.15em",
             textTransform: "uppercase", color: "#22d3ee",
+            whiteSpace: "nowrap",
           }}>
-            🏎️&nbsp; Sep 5, 2026 · Hackathon Day · PESIAMS
+            {isMobileSize ? "🏎️ Sep 5, 2026 · PESIAMS" : "🏎️ Sep 5, 2026 · Hackathon Day · PESIAMS"}
           </div>
         </div>
 
         {/* HUD: Speedometer bottom-left */}
-        <Speedometer speed={renderSpeed} progress={renderProgress} />
+        <Speedometer speed={renderSpeed} progress={renderProgress} isMobileSize={isMobileSize} />
 
         {/* HUD: Minimap top-right */}
-        <MinimapHUD progress={renderProgress} currentIndex={currentIndex} />
+        <MinimapHUD progress={renderProgress} currentIndex={currentIndex} isMobileSize={isMobileSize} />
 
         {/* Scroll hint — fades out */}
         <motion.div style={{
-          position: "absolute", bottom: 24, left: "50%",
-          transform: "translateX(-50%)", zIndex: 40,
+          position: "absolute", bottom: isMobileSize ? 80 : 24, left: "50%",
+          transform: isMobileSize ? "translateX(-50%) scale(0.85)" : "translateX(-50%)",
+          transformOrigin: "bottom center",
+          zIndex: 40,
           opacity: scrollHint, pointerEvents: "none",
         }}>
           <div style={{
@@ -749,10 +783,11 @@ export default function RaceTrackScene() {
             />
             <span style={{
               fontFamily: "var(--font-display,'Outfit',system-ui)",
-              fontSize: 9, fontWeight: 900, letterSpacing: "0.22em",
+              fontSize: 9, fontWeight: 900, letterSpacing: "0.15em",
               textTransform: "uppercase", color: "#52525b",
+              whiteSpace: "nowrap",
             }}>
-              Scroll to race · {EVENTS.length} checkpoints · Finish line ahead
+              {isMobileSize ? "Scroll to race" : `Scroll to race · ${EVENTS.length} checkpoints · Finish line ahead`}
             </span>
           </div>
         </motion.div>
