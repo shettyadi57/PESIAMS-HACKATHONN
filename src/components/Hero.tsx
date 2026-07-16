@@ -23,6 +23,18 @@ export default function Hero({ onExploreClick }: HeroProps) {
     const hero = heroRef.current;
     if (!hero) return;
 
+    // Detect if we should enable 3D parallax (disable on mobile/touch screens to fix Safari blending/rendering bugs)
+    const isTouch = window.matchMedia("(pointer: coarse)").matches || 
+                    ("ontouchstart" in window) || 
+                    (window.innerWidth < 768);
+
+    if (isTouch) {
+      if (videoWrapRef.current) {
+        videoWrapRef.current.style.transform = "none";
+      }
+      return;
+    }
+
     const onMove = (e: MouseEvent) => {
       const { left, top, width, height } = hero.getBoundingClientRect();
       // Normalize -1 → +1
@@ -121,23 +133,30 @@ export default function Hero({ onExploreClick }: HeroProps) {
         >
 
         {/* VIDEO — full cover like a cinema backdrop */}
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
+        {/* Safari mix-blend-mode fix: Apply the blend mode to a wrapper div rather than the video tag itself. */}
+        <div
           className="absolute inset-0 w-full h-full pointer-events-none select-none"
           style={{
-            objectFit: "cover",
-            objectPosition: "center center",
             mixBlendMode: "screen",
-            opacity: 0.90,
-            willChange: "transform",
-            transform: "translateZ(0)", // force GPU layer — smooth on mobile
           }}
         >
-          <source src="/hero_robot.mp4" type="video/mp4" />
-        </video>
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full"
+            style={{
+              objectFit: "cover",
+              objectPosition: "center center",
+              opacity: 0.90,
+              willChange: "transform",
+              transform: "translateZ(0)", // force GPU layer — smooth on mobile
+            }}
+          >
+            <source src="/hero_robot.mp4" type="video/mp4" />
+          </video>
+        </div>
 
         {/* ── GRADIENT LAYER 1: Deep diagonal aurora (violet → cyan) */}
         <div
